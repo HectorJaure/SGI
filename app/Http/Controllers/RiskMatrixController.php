@@ -4,8 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Risk;
 use Illuminate\Http\Request;
-use Barryvdh\DomPDF\Facade\Pdf; 
+
 use App\Http\Controllers\NotificationController;
+
 
 class RiskMatrixController extends Controller
 {
@@ -28,6 +29,14 @@ class RiskMatrixController extends Controller
         
         if ($request->has('clasificacion') && $request->clasificacion != '') {
             $query->where('clasificacion', $request->clasificacion);
+        }
+
+        if ($request->has('otros_factores') && $request->otros_factores != '') {
+            $query->where('otros_factores', $request->otros_factores);
+        }
+
+        if ($request->has('otros_factores') && $request->otros_factores != '') {
+            $queryForCounters->where('otros_factores', $request->otros_factores);
         }
         
         if ($request->has('nivel_riesgo') && $request->nivel_riesgo != '') {
@@ -125,6 +134,18 @@ class RiskMatrixController extends Controller
             'consecuencia_infraestructura' => 'required|numeric|min:0|max:3',
         ]);
 
+        // Verificar si ya existe un riesgo con los mismos 3 campos
+        $riesgoExistente = Risk::where('lugar', $request->lugar)
+            ->where('actividad', $request->actividad)
+            ->where('peligro', $request->peligro)
+            ->first();
+
+        if ($riesgoExistente) {
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Ya existe un riesgo registrado con el mismo lugar, actividad y descripción del peligro.');
+        }
+
         // Calcular significancia según el Excel
         $probabilidadTotal = $request->tiempo_exposicion + $request->personas_expuestas + $request->probabilidad_ocurrencia;
         $consecuenciaTotal = $request->consecuencia_infraestructura + $request->consecuencia_personas;
@@ -183,8 +204,17 @@ class RiskMatrixController extends Controller
 
         $riesgo = Risk::findOrFail($id);
 
-        if (empty($request->otros_factores)) {
-            $request->merge(['otros_factores' => 'No aplica']);
+        // Verificar si ya existe otro riesgo con los mismos 3 campos (excluyendo el actual)
+        $riesgoExistente = Risk::where('lugar', $request->lugar)
+            ->where('actividad', $request->actividad)
+            ->where('peligro', $request->peligro)
+            ->where('id', '!=', $id) // Excluir el riesgo actual
+            ->first();
+
+        if ($riesgoExistente) {
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Ya existe otro riesgo registrado con el mismo lugar, actividad y descripción del peligro.');
         }
 
         // Recalcular significancia según el Excel
@@ -259,94 +289,4 @@ class RiskMatrixController extends Controller
         return $niveles[$nivel] ?? $nivel;
     }
 
-    public function exportPdf(Request $request)
-    {
-        // Obtener todos los riesgos agrupados por lugar y actividad
-        $riesgos = Risk::orderBy('lugar')->orderBy('actividad')->get();
-        
-        // Agrupar riesgos para el PDF
-        $riesgosAgrupados = [];
-        foreach ($riesgos as $riesgo) {
-            $clave = $riesgo->lugar . '|' . $riesgo->actividad;
-            if (!isset($riesgosAgrupados[$clave])) {
-                $riesgosAgrupados[$clave] = [
-                    'lugar' => $riesgo->lugar,
-                    'actividad' => $riesgo->actividad,
-                    'riesgos' => []
-                ];
-            }
-            $riesgosAgrupados[$clave]['riesgos'][] = $riesgo;
-        }
-
-        // Datos EXACTOS de las soluciones recomendadas con prioridades (del Excel)
-        $solucionesRecomendadas = [
-            [
-                'descripcion' => 'Colocación de jaladera en credenza en S.S. Colocación de canaletas en cables sueltos. Mantenimiento de mobiliario.',
-                'prioridad' => 'inmediata'
-            ],
-            [
-                'descripcion' => 'Orden y mantenimiento de limpieza continúo en diversas áreas, principalmente las identificadas en el recodrrido. Colocación de señalética "prohibido estacionarse" y circular a estudiantes informando las áreas correspondientes para estacionarse.',
-                'prioridad' => 'alta'
-            ],
-            [
-                'descripcion' => 'Mantenimiento a infraestructura (Techo) para las goteras, colocación de señalética de precaución ante la presencia de agua. Mantenimiento y refuerzo de los plafones en las instalaciones del ITSN y señalética de prohibición de manipulación de los mismo plafones por parte de la comunidad estudiantil.',
-                'prioridad' => 'media'
-            ],
-            [
-                'descripcion' => 'Colocación de cintilla de precaución en zonas de riesgo mientras se de mantenimiento.',
-                'prioridad' => 'inmediata'
-            ],
-            [
-                'descripcion' => 'Colocación de señalética de precaución de pisos mojados. Tapar hueco en el suelo con material de albañearía en los diferentes salones. Colocación de cinta de precaución en tapadera de drenaje en estacionamiento.',
-                'prioridad' => 'alta'
-            ],
-            [
-                'descripcion' => 'Colocación de una varilla o tubo PTR de manera horizontal, uniéndose poste a poste en el barandar de las escaleras del edificio C.',
-                'prioridad' => 'media'
-            ],
-            [
-                'descripcion' => 'Colocación de señalética para restringir el a las bodegas y almacén. Tener accesos controlados bajo llave y persona (s) responsable (s).',
-                'prioridad' => 'baja'
-            ],
-            [
-                'descripcion' => 'Mantenimiento de lineas eléctricas y contacos en las diversas áreas, principalmente las señaladas en el acta.',
-                'prioridad' => 'inmediata'
-            ],
-            [
-                'descripcion' => 'Proporcionar equipo de protección (guantes) al personal de matenimiento y limpieza del instituto.',
-                'prioridad' => 'alta'
-            ],
-            [
-                'descripcion' => 'Mantenimiento de limpieza y programar fumigaciones anuales. Difundir el Plan de Respuesta ante emergencias del ITSN.',
-                'prioridad' => 'media'
-            ],
-            [
-                'descripcion' => 'Rotular recipientes advirtiendo su contenido en las bodegas, almacen y laboratorio de IIAS.',
-                'prioridad' => 'baja'
-            ]
-        ];
-
-        // Datos EXACTOS del seguimiento (del Excel)
-        $seguimientoRecomendaciones = [
-            [
-                'avance' => 'Se ha mostrado avance respecto a los hallazgos anteriores',
-                'causa' => ''
-            ],
-            [
-                'avance' => 'Visualizar la prevención y no la corección de situaciones de riesgo con ayuda del Plan de Mantenimiento.',
-                'causa' => ''
-            ]
-        ];
-
-        $data = [
-            'riesgos' => $riesgos,
-            'riesgosAgrupados' => $riesgosAgrupados,
-            'solucionesRecomendadas' => $solucionesRecomendadas,
-            'seguimientoRecomendaciones' => $seguimientoRecomendaciones
-        ];
-
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('risks.acta-pdf', $data);
-        
-        return $pdf->download('acta-verificacion-riesgos-' . date('Y-m-d') . '.pdf');
-    }
 }

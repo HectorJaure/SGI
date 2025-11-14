@@ -7,6 +7,7 @@ use App\Http\Controllers\RiskMatrixController;
 use App\Http\Controllers\RequisitoLegalController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\VerificationActController;
 use Illuminate\Support\Facades\Route;
 
 // Rutas PÚBLICAS
@@ -33,7 +34,8 @@ Route::middleware([\App\Http\Middleware\AuthenticateSession::class])->group(func
     Route::get('/risks/{id}/edit', [RiskMatrixController::class, 'edit'])->name('risks.edit');
     Route::put('/risks/{id}', [RiskMatrixController::class, 'update'])->name('risks.update');
     Route::delete('/risks/{id}', [RiskMatrixController::class, 'destroy'])->name('risks.destroy');
-    Route::get('/risks/export-pdf', [RiskMatrixController::class, 'exportPdf'])->name('risks.export-pdf');
+    Route::get('/export/verification-act', [VerificationActController::class, 'exportVerificationAct'])->name('export.verification-act');
+
 
     // Requisitos Legales (accesibles para todos los usuarios autenticados)
     Route::get('/requisitos-legales', [RequisitoLegalController::class, 'index'])->name('requisitos-legales.index');
@@ -42,7 +44,10 @@ Route::middleware([\App\Http\Middleware\AuthenticateSession::class])->group(func
     Route::get('/requisitos-legales/{id}/editar', [RequisitoLegalController::class, 'edit'])->name('requisitos-legales.edit');
     Route::put('/requisitos-legales/{id}', [RequisitoLegalController::class, 'update'])->name('requisitos-legales.update');
     Route::delete('/requisitos-legales/{id}', [RequisitoLegalController::class, 'destroy'])->name('requisitos-legales.destroy');
-    
+
+    // Ruta independiente para el instructivo
+    Route::get('/instructivo', function () {return view('instructivo');})->name('instructivo');
+
     // Grupo de rutas SOLO PARA ADMINISTRADORES
     Route::middleware([\App\Http\Middleware\AdminMiddleware::class])->group(function () {
         

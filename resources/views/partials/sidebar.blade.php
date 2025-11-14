@@ -24,9 +24,16 @@
             <i class="fas fa-exclamation-triangle me-2"></i> Matriz de Riesgos
         </a>
     </li>
+
     <li class="nav-item">
         <a href="{{ route('requisitos-legales.index') }}" class="nav-link menu-item {{ request()->routeIs('requisitos-legales.*') ? 'active' : '' }}">
             <i class="fas fa-gavel me-2"></i> Matriz de Requisitos Legales
+        </a>
+    </li>
+
+    <li class="nav-item">
+        <a href="{{ route('instructivo') }}" class="nav-link menu-item {{ request()->routeIs('instructivo') ? 'active' : '' }}">
+            <i class="fas fa-file-word me-2"></i> Instructivo
         </a>
     </li>
     

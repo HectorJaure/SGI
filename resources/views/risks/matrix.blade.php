@@ -129,10 +129,9 @@
                     <a href="{{ route('risks.create') }}" class="btn btn-success flex-grow-1 d-flex justify-content-center align-items-center">
                         <i class="fas fa-plus"></i> Nuevo Registro
                     </a>
-                    <button type="button" class="btn btn-warning flex-grow-1 d-flex justify-content-center align-items-center" 
-                            onclick="exportarActa()" id="btn-exportar-pdf">
-                        <i class="fas fa-file-export"></i> Exportar acta de verificacion
-                    </button>
+                    <a href="{{ route('export.verification-act') }}" class="btn btn-primary">
+                        <i class="fas fa-file-excel"></i> Exportar Acta de Verificación
+                    </a>
                 </div>
             </form>
         </div>
@@ -1294,19 +1293,20 @@
         }
     });
 
-    function exportarActa() {
-        const btnExportar = document.getElementById('btn-exportar-pdf');
+    function exportarExcel() {
+        const btnExportar = document.getElementById('btn-exportar-excel');
         const originalText = btnExportar.innerHTML;
-        btnExportar.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generando PDF...';
+        btnExportar.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generando Excel...';
         btnExportar.disabled = true;
         
         try {
-            const url = "{{ route('risks.export-pdf') }}";
+            const params = new URLSearchParams(window.location.search);
+            const url = "{{ route('export.verification-act') }}" + params.toString();
             window.location.href = url;
             
         } catch (error) {
-            console.error('Error al exportar PDF:', error);
-            alert('Error al generar el PDF. Por favor, intente nuevamente.');
+            console.error('Error al exportar Excel:', error);
+            alert('Error al generar el Excel. Por favor, intente nuevamente.');
         } finally {
             setTimeout(() => {
                 btnExportar.innerHTML = originalText;

@@ -6,6 +6,24 @@
 
 @section('content')
 <div class="container-fluid">
+    @if(session('error'))
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-circle me-2"></i>
+            {{ session('error') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
+
+    @if($errors->any())
+        <div class="alert alert-danger">
+            <i class="fas fa-exclamation-circle me-2"></i>
+            <ul class="mb-0">
+                @foreach($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
     <div class="card">
         <div class="card-body">
             <form action="{{ route('risks.update', $riesgo->id) }}" method="POST">
@@ -89,13 +107,16 @@
                 <div class="mb-3">
                     <div class="form-group">
                         <label for="otros_factores" class="form-label">Otros Factores</label>
-                        <input type="text" 
-                            id="otros_factores" 
-                            name="otros_factores" 
-                            class="form-control"
-                            value="{{ old('otros_factores', $riesgo->otros_factores) }}"
-                            placeholder="Ingrese otros factores relevantes">
-                        <small class="form-text text-muted">Dejar vacío si no aplica</small>
+                        <select name="otros_factores" id="otros_factores" class="form-select">
+                            <option value="No aplica" {{ old('otros_factores', $riesgo->otros_factores) == 'No aplica' ? 'selected' : '' }}>No aplica</option>
+                            <option value="Factores sociales" {{ old('otros_factores', $riesgo->otros_factores) == 'Factores sociales' ? 'selected' : '' }}>Factores sociales</option>
+                            <option value="Carga de trabajo" {{ old('otros_factores', $riesgo->otros_factores) == 'Carga de trabajo' ? 'selected' : '' }}>Carga de trabajo</option>
+                            <option value="Horas de trabajo" {{ old('otros_factores', $riesgo->otros_factores) == 'Horas de trabajo' ? 'selected' : '' }}>Horas de trabajo</option>
+                            <option value="Victimización y acoso e intimidación" {{ old('otros_factores', $riesgo->otros_factores) == 'Victimización y acoso e intimidación' ? 'selected' : '' }}>Victimización y acoso e intimidación</option>
+                            <option value="Inmediaciones del lugar de trabajo" {{ old('otros_factores', $riesgo->otros_factores) == 'Inmediaciones del lugar de trabajo' ? 'selected' : '' }}>Inmediaciones del lugar de trabajo</option>
+                            <option value="Situaciones no controladas por la organización y que ocurren en las inmediaciones" {{ old('otros_factores', $riesgo->otros_factores) == 'Situaciones no controladas por la organización y que ocurren en las inmediaciones' ? 'selected' : '' }}>Situaciones no controladas por la organización y que ocurren en las inmediaciones</option>
+                        </select>
+                        <small class="form-text text-muted">Seleccione otros factores relevantes</small>
                         @error('otros_factores')
                             <div class="text-danger">{{ $message }}</div>
                         @enderror

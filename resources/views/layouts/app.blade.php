@@ -636,6 +636,17 @@
     scrollbar-color: var(--azul-medio) var(--azul-marino);
 }
 
+.menu-item {
+    display: flex;
+    align-items: center;
+}
+
+.menu-item i {
+    width: 20px;
+    margin-right: 10px;
+    text-align: center;
+}
+
 .sidebar::-webkit-scrollbar {
     width: 6px;
 }
