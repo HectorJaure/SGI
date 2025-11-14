@@ -22,4 +22,14 @@ class Notification extends Model
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
+
+    public function getCreatedAtCorregidoAttribute()
+    {
+        return $this->created_at->subHours(6);
+    }
+
+    public function getCreatedAtHumansCorregidoAttribute()
+    {
+        return $this->created_at->diffForHumans();
+    }
 }

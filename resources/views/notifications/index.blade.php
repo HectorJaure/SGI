@@ -134,8 +134,8 @@
                     <div class="notification-footer">
                         <span class="notification-time">
                             <i class="fas fa-clock me-1"></i> 
-                            {{ $notification->created_at->format('d/m/Y H:i') }}
-                            ({{ $notification->created_at->diffForHumans() }})
+                            {{ $notification->created_at_corregido->format('d/m/Y H:i') }}
+                            ({{ $notification->created_at_humans_corregido }})
                         </span>
                         <!-- Mostrar quién realizó la acción -->
                         @if($notification->usuario_accion && $notification->usuario_accion != 'Sistema')
