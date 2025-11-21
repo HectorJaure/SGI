@@ -13,27 +13,39 @@
                 
                 <div class="row mb-3">
                     <div class="col-md-6">
-                        <label for="norma" class="form-label">Norma *</label>
-                        <select name="norma" id="norma" class="form-select" required>
-                            <option value="">Seleccionar norma</option>
-                            <option value="ISO 45001:2018" {{ $requisito->norma == 'ISO 45001:2018' ? 'selected' : '' }}>ISO 45001:2018</option>
-                            <option value="NOM-030-STPS" {{ $requisito->norma == 'NOM-030-STPS' ? 'selected' : '' }}>NOM-030-STPS</option>
-                            <option value="NOM-035-STPS" {{ $requisito->norma == 'NOM-035-STPS' ? 'selected' : '' }}>NOM-035-STPS</option>
-                            <option value="LFT" {{ $requisito->norma == 'LFT' ? 'selected' : '' }}>Ley Federal del Trabajo</option>
-                            <option value="Reglamento Federal" {{ $requisito->norma == 'Reglamento Federal' ? 'selected' : '' }}>Reglamento Federal de Seguridad y Salud</option>
-                        </select>
+                        <div class="form-group">
+                            <label for="norma" class="form-label">Norma *</label>
+                            <input list="normas-list" id="norma" name="norma" 
+                                   value="{{ old('norma', $requisito->norma) }}" 
+                                   placeholder="Selecciona o escribe una nueva norma"
+                                   class="form-control" required autocomplete="on">
+                            <datalist id="normas-list">
+                                @foreach($normas as $norma)
+                                    <option value="{{ $norma }}">{{ $norma }}</option>
+                                @endforeach
+                            </datalist>
+                            @error('norma')
+                                <div class="text-danger">{{ $message }}</div>
+                            @enderror
+                        </div>
                     </div>
                     
                     <div class="col-md-6">
-                        <label for="tipo_requisito" class="form-label">Tipo de Requisito *</label>
-                        <select name="tipo_requisito" id="tipo_requisito" class="form-select" required>
-                            <option value="">Seleccionar tipo</option>
-                            <option value="Requisito General" {{ $requisito->tipo_requisito == 'Requisito General' ? 'selected' : '' }}>Requisito General</option>
-                            <option value="Requisito de Proceso" {{ $requisito->tipo_requisito == 'Requisito de Proceso' ? 'selected' : '' }}>Requisito de Proceso</option>
-                            <option value="Requisito Legal" {{ $requisito->tipo_requisito == 'Requisito Legal' ? 'selected' : '' }}>Requisito Legal</option>
-                            <option value="Requisito Documental" {{ $requisito->tipo_requisito == 'Requisito Documental' ? 'selected' : '' }}>Requisito Documental</option>
-                            <option value="Requisito de Control" {{ $requisito->tipo_requisito == 'Requisito de Control' ? 'selected' : '' }}>Requisito de Control</option>
-                        </select>
+                        <div class="form-group">
+                            <label for="tipo_requisito" class="form-label">Tipo de Requisito *</label>
+                            <input list="tipos-requisito-list" id="tipo_requisito" name="tipo_requisito" 
+                                   value="{{ old('tipo_requisito', $requisito->tipo_requisito) }}" 
+                                   placeholder="Selecciona o escribe un nuevo tipo"
+                                   class="form-control" required autocomplete="on">
+                            <datalist id="tipos-requisito-list">
+                                @foreach($tiposRequisito as $tipo)
+                                    <option value="{{ $tipo }}">{{ $tipo }}</option>
+                                @endforeach
+                            </datalist>
+                            @error('tipo_requisito')
+                                <div class="text-danger">{{ $message }}</div>
+                            @enderror
+                        </div>
                     </div>
                 </div>
 
@@ -66,7 +78,7 @@
                 <!-- Sección Cumplimiento -->
                 <div class="card mb-4">
                     <div class="card-header bg-light">
-                        <h6 class="mb-0">Cumplimiento *</h6>
+                        <h6 class="mb-0">Cumplimiento</h6>
                     </div>
                     <div class="card-body">
                         <div class="row mb-3">
@@ -74,7 +86,7 @@
                                 <div class="form-check">
                                     <input class="form-check-input" type="radio" name="cumplimiento" 
                                            id="cumplimiento_si" value="si" 
-                                           {{ $requisito->cumplimiento == 'si' ? 'checked' : '' }} 
+                                           {{ old('cumplimiento', $requisito->cumplimiento) == 'si' ? 'checked' : '' }} 
                                            onchange="toggleCumplimiento()">
                                     <label class="form-check-label" for="cumplimiento_si">
                                         SI - Se cumple el requisito
@@ -85,7 +97,7 @@
                                 <div class="form-check">
                                     <input class="form-check-input" type="radio" name="cumplimiento" 
                                            id="cumplimiento_no" value="no" 
-                                           {{ $requisito->cumplimiento == 'no' ? 'checked' : '' }} 
+                                           {{ old('cumplimiento', $requisito->cumplimiento) == 'no' ? 'checked' : '' }} 
                                            onchange="toggleCumplimiento()">
                                     <label class="form-check-label" for="cumplimiento_no">
                                         NO - No se cumple el requisito
@@ -115,39 +127,38 @@
 
                 <div class="row mb-3">
                     <div class="col-md-4">
-                        <label for="fecha_cumplimiento" class="form-label">Fecha de cumplimiento *</label>
+                        <label for="fecha_cumplimiento" class="form-label">Fecha de cumplimiento</label>
                         <input type="date" name="fecha_cumplimiento" id="fecha_cumplimiento" 
                                class="form-control" 
-                               value="{{ old('fecha_cumplimiento', $requisito->fecha_cumplimiento->format('Y-m-d')) }}" 
-                               required>
+                               value="{{ old('fecha_cumplimiento', $requisito->fecha_cumplimiento ? $requisito->fecha_cumplimiento->format('Y-m-d') : '') }}">
                     </div>
                     
                     <div class="col-md-4">
-                        <label for="responsables" class="form-label">Responsable(s) *</label>
+                        <label for="responsables" class="form-label">Responsable(s)</label>
                         <input type="text" name="responsables" id="responsables" class="form-control" 
-                               value="{{ old('responsables', $requisito->responsables) }}" required>
+                               value="{{ old('responsables', $requisito->responsables) }}">
                     </div>
                     
                     <div class="col-md-4">
-                        <label for="frecuencia_control" class="form-label">Frecuencia del control *</label>
-                        <select name="frecuencia_control" id="frecuencia_control" class="form-select" required>
+                        <label for="frecuencia_control" class="form-label">Frecuencia del control</label>
+                        <select name="frecuencia_control" id="frecuencia_control" class="form-select">
                             <option value="">Seleccionar frecuencia</option>
-                            <option value="Diaria" {{ $requisito->frecuencia_control == 'Diaria' ? 'selected' : '' }}>Diaria</option>
-                            <option value="Semanal" {{ $requisito->frecuencia_control == 'Semanal' ? 'selected' : '' }}>Semanal</option>
-                            <option value="Quincenal" {{ $requisito->frecuencia_control == 'Quincenal' ? 'selected' : '' }}>Quincenal</option>
-                            <option value="Mensual" {{ $requisito->frecuencia_control == 'Mensual' ? 'selected' : '' }}>Mensual</option>
-                            <option value="Bimestral" {{ $requisito->frecuencia_control == 'Bimestral' ? 'selected' : '' }}>Bimestral</option>
-                            <option value="Trimestral" {{ $requisito->frecuencia_control == 'Trimestral' ? 'selected' : '' }}>Trimestral</option>
-                            <option value="Semestral" {{ $requisito->frecuencia_control == 'Semestral' ? 'selected' : '' }}>Semestral</option>
-                            <option value="Anual" {{ $requisito->frecuencia_control == 'Anual' ? 'selected' : '' }}>Anual</option>
+                            <option value="Diaria" {{ old('frecuencia_control', $requisito->frecuencia_control) == 'Diaria' ? 'selected' : '' }}>Diaria</option>
+                            <option value="Semanal" {{ old('frecuencia_control', $requisito->frecuencia_control) == 'Semanal' ? 'selected' : '' }}>Semanal</option>
+                            <option value="Quincenal" {{ old('frecuencia_control', $requisito->frecuencia_control) == 'Quincenal' ? 'selected' : '' }}>Quincenal</option>
+                            <option value="Mensual" {{ old('frecuencia_control', $requisito->frecuencia_control) == 'Mensual' ? 'selected' : '' }}>Mensual</option>
+                            <option value="Bimestral" {{ old('frecuencia_control', $requisito->frecuencia_control) == 'Bimestral' ? 'selected' : '' }}>Bimestral</option>
+                            <option value="Trimestral" {{ old('frecuencia_control', $requisito->frecuencia_control) == 'Trimestral' ? 'selected' : '' }}>Trimestral</option>
+                            <option value="Semestral" {{ old('frecuencia_control', $requisito->frecuencia_control) == 'Semestral' ? 'selected' : '' }}>Semestral</option>
+                            <option value="Anual" {{ old('frecuencia_control', $requisito->frecuencia_control) == 'Anual' ? 'selected' : '' }}>Anual</option>
                         </select>
                     </div>
                 </div>
 
                 <div class="mb-4">
-                    <label for="responsable_control" class="form-label">Responsable(s) del control *</label>
+                    <label for="responsable_control" class="form-label">Responsable(s) del control</label>
                     <input type="text" name="responsable_control" id="responsable_control" class="form-control" 
-                           value="{{ old('responsable_control', $requisito->responsable_control) }}" required>
+                           value="{{ old('responsable_control', $requisito->responsable_control) }}">
                 </div>
 
                 <div class="d-flex justify-content-end">
@@ -208,6 +219,26 @@
         margin-bottom: 1rem;
         position: relative;
     }
+
+    /* Quitar flechas por defecto del navegador */
+    .form-group input[list]::-webkit-calendar-picker-indicator {
+        display: none !important;
+    }
+
+    .form-group input[list]::-webkit-list-button {
+        display: none !important;
+    }
+
+    .form-group input[list]::-webkit-clear-button {
+        display: none !important;
+    }
+
+    .form-group input[list] {
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+        background-image: none !important;
+    }
 </style>
 @endsection
 
@@ -222,13 +253,13 @@
         if (cumplimientoSi.checked) {
             opcionSi.style.opacity = '1';
             opcionNo.style.opacity = '0.6';
-            document.getElementById('evidencia').required = true;
+            document.getElementById('evidencia').required = false;
             document.getElementById('acciones_no').required = false;
         } else if (cumplimientoNo.checked) {
             opcionSi.style.opacity = '0.6';
             opcionNo.style.opacity = '1';
             document.getElementById('evidencia').required = false;
-            document.getElementById('acciones_no').required = true;
+            document.getElementById('acciones_no').required = false;
         } else {
             opcionSi.style.opacity = '0.6';
             opcionNo.style.opacity = '0.6';
@@ -288,21 +319,6 @@
             valido = false;
         }
 
-        // Validar fecha de cumplimiento (no puede ser anterior a hoy)
-        const fechaCumplimiento = document.getElementById('fecha_cumplimiento');
-        const hoy = new Date().toISOString().split('T')[0];
-        if (fechaCumplimiento.value && fechaCumplimiento.value < hoy) {
-            mostrarError(fechaCumplimiento, 'No puede ser anterior a la fecha actual');
-            valido = false;
-        }
-
-        // Validar que se haya seleccionado cumplimiento
-        const cumplimientoSeleccionado = document.querySelector('input[name="cumplimiento"]:checked');
-        if (!cumplimientoSeleccionado) {
-            alert('Debe seleccionar si cumple o no el requisito');
-            valido = false;
-        }
-
         // Validar longitud máxima de campos
         const validacionesLongitud = [
             { campo: 'norma', max: 255 },
@@ -329,13 +345,6 @@
     // Inicializar el estado al cargar la página
     document.addEventListener('DOMContentLoaded', function() {
         toggleCumplimiento();
-        
-        // Establecer fecha actual por defecto
-        const fechaCumplimiento = document.getElementById('fecha_cumplimiento');
-        if (fechaCumplimiento && !fechaCumplimiento.value) {
-            const today = new Date().toISOString().split('T')[0];
-            fechaCumplimiento.value = today;
-        }
         
         // Agregar estilos para las opciones de cumplimiento
         const opcionSi = document.getElementById('opcion_si');
@@ -393,21 +402,6 @@
             case 'numero_requisito':
                 if (valor && !/^[\d\.]+$/.test(valor)) {
                     mostrarError(campo, 'Solo puede contener números y puntos');
-                    return false;
-                }
-                break;
-            case 'fecha_cumplimiento':
-                if (valor) {
-                    const hoy = new Date().toISOString().split('T')[0];
-                    if (valor < hoy) {
-                        mostrarError(campo, 'No puede ser anterior a hoy');
-                        return false;
-                    }
-                }
-                break;
-            case 'email':
-                if (valor && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(valor)) {
-                    mostrarError(campo, 'Formato de email inválido');
                     return false;
                 }
                 break;

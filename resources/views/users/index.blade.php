@@ -94,7 +94,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach($users as $user)
+                    @forelse($users as $user)
                     <tr>
                         <td>
                             <div class="user-info-cell">
@@ -129,7 +129,15 @@
                             </div>
                         </td>
                     </tr>
-                    @endforeach
+                    @empty
+                    <tr>
+                        <td colspan="6" class="text-center" style="padding: 20px;">
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle"></i> No se encontraron usuarios
+                            </div>
+                        </td>
+                    </tr>
+                    @endforelse
                 </tbody>
             </table>
         </div>

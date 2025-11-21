@@ -16,8 +16,8 @@ class RequisitoLegalController extends Controller
         if ($request->has('search') && $request->search != '') {
             $query->where(function($q) use ($request) {
                 $q->where('titulo', 'like', '%'.$request->search.'%')
-                ->orWhere('descripcion', 'like', '%'.$request->search.'%')
-                ->orWhere('norma', 'like', '%'.$request->search.'%');
+                  ->orWhere('descripcion', 'like', '%'.$request->search.'%')
+                  ->orWhere('norma', 'like', '%'.$request->search.'%');
             });
         }
         
@@ -29,6 +29,11 @@ class RequisitoLegalController extends Controller
         // Filtro por norma
         if ($request->has('norma') && $request->norma != '') {
             $query->where('norma', $request->norma);
+        }
+        
+        // Filtro por categoría de norma
+        if ($request->has('categoria_norma') && $request->categoria_norma != '') {
+            $query->where('categoria_norma', $request->categoria_norma);
         }
         
         // Filtro por tipo de requisito
@@ -51,8 +56,15 @@ class RequisitoLegalController extends Controller
             $query->where('responsables', 'like', '%'.$request->responsable.'%');
         }
         
+        // Determinar si mostrar todos o paginar
         $perPage = $request->get('per_page', 10);
-        $requisitos = $query->paginate($perPage);
+        
+        if ($perPage === 'all') {
+            $requisitos = $query->get();
+        } else {
+            $requisitos = $query->paginate($perPage);
+            $requisitos->appends($request->except('page'));
+        }
         
         // OBTENER LAS NORMAS PARA EL FILTRO
         $normas = RequisitoLegal::distinct('norma')->pluck('norma')->filter();
@@ -60,18 +72,73 @@ class RequisitoLegalController extends Controller
         // OBTENER LOS TIPOS DE REQUISITO PARA EL FILTRO
         $tiposRequisito = RequisitoLegal::distinct('tipo_requisito')->pluck('tipo_requisito')->filter();
         
-        return view('requisitos-legales.index', compact('requisitos', 'normas', 'tiposRequisito'));
+        // DEFINIR CATEGORÍAS
+        $categoriasNorma = [
+            'seguridad' => 'Normas de Seguridad',
+            'salud' => 'Normas de Salud', 
+            'organizacion' => 'Normas de Organización'
+        ];
+        
+        // AGRUPAR REQUISITOS POR CATEGORÍA
+        $requisitosAgrupados = $this->agruparPorCategoriaNorma($requisitos);
+        
+        return view('requisitos-legales.index', compact('requisitos', 'normas', 'tiposRequisito', 'requisitosAgrupados', 'categoriasNorma'));
+    }
+
+    /**
+     * Agrupa los requisitos por categoría de norma
+     */
+    private function agruparPorCategoriaNorma($requisitos)
+    {
+        $agrupados = [
+            'seguridad' => [
+                'nombre' => 'Normas de Seguridad',
+                'requisitos' => collect([]),
+                'icono' => 'fas fa-hard-hat',
+                'color' => '#e53e3e',
+                'color_claro' => '#fed7d7'
+            ],
+            'salud' => [
+                'nombre' => 'Normas de Salud',
+                'requisitos' => collect([]),
+                'icono' => 'fas fa-heartbeat',
+                'color' => '#38a169',
+                'color_claro' => '#c6f6d5'
+            ],
+            'organizacion' => [
+                'nombre' => 'Normas de Organización',
+                'requisitos' => collect([]),
+                'icono' => 'fas fa-sitemap',
+                'color' => '#3182ce',
+                'color_claro' => '#bee3f8'
+            ]
+        ];
+
+        foreach ($requisitos as $requisito) {
+            if (isset($agrupados[$requisito->categoria_norma])) {
+                $agrupados[$requisito->categoria_norma]['requisitos']->push($requisito);
+            } else {
+                // Si no tiene categoría, asignar a seguridad por defecto
+                $agrupados['seguridad']['requisitos']->push($requisito);
+            }
+        }
+
+        return $agrupados;
     }
 
     public function create()
     {
-        return view('requisitos-legales.create');
+        $normas = RequisitoLegal::distinct('norma')->pluck('norma')->filter();
+        $tiposRequisito = RequisitoLegal::distinct('tipo_requisito')->pluck('tipo_requisito')->filter();
+        
+        return view('requisitos-legales.create', compact('normas', 'tiposRequisito'));
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
             'norma' => 'required|string|max:255',
+            'categoria_norma' => 'required|in:seguridad,salud,organizacion',
             'titulo' => 'required|string|max:255',
             'tipo_requisito' => 'required|string|max:255',
             'numero_requisito' => 'required|string|max:50|regex:/^[\d\.]+$/',
@@ -80,7 +147,7 @@ class RequisitoLegalController extends Controller
             'cumplimiento' => 'required|in:si,no',
             'evidencia' => 'nullable|string',
             'acciones_no' => 'nullable|string',
-            'fecha_cumplimiento' => 'required|date|after_or_equal:today',
+            'fecha_cumplimiento' => 'nullable|date|after_or_equal:today',
             'responsables' => 'required|string|max:255',
             'frecuencia_control' => 'required|string|max:100',
             'responsable_control' => 'required|string|max:255',
@@ -104,13 +171,19 @@ class RequisitoLegalController extends Controller
     public function edit($id)
     {
         $requisito = RequisitoLegal::findOrFail($id);
-        return view('requisitos-legales.edit', compact('requisito'));
+        
+        // Obtener las opciones para los datalist
+        $normas = RequisitoLegal::distinct('norma')->pluck('norma')->filter();
+        $tiposRequisito = RequisitoLegal::distinct('tipo_requisito')->pluck('tipo_requisito')->filter();
+        
+        return view('requisitos-legales.edit', compact('requisito', 'normas', 'tiposRequisito'));
     }
 
     public function update(Request $request, $id)
     {
         $validated = $request->validate([
             'norma' => 'required|string|max:255',
+            'categoria_norma' => 'required|in:seguridad,salud,organizacion',
             'titulo' => 'required|string|max:255',
             'tipo_requisito' => 'required|string|max:255',
             'numero_requisito' => 'required|string|max:50|regex:/^[\d\.]+$/',
@@ -119,7 +192,7 @@ class RequisitoLegalController extends Controller
             'cumplimiento' => 'required|in:si,no',
             'evidencia' => 'nullable|string',
             'acciones_no' => 'nullable|string',
-            'fecha_cumplimiento' => 'required|date|after_or_equal:today',
+            'fecha_cumplimiento' => 'nullable|date|after_or_equal:today',
             'responsables' => 'required|string|max:255',
             'frecuencia_control' => 'required|string|max:100',
             'responsable_control' => 'required|string|max:255',

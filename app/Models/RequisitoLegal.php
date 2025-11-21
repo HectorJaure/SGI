@@ -13,6 +13,7 @@ class RequisitoLegal extends Model
 
     protected $fillable = [
         'norma',
+        'categoria_norma',
         'titulo', 
         'tipo_requisito',
         'numero_requisito',
@@ -30,4 +31,20 @@ class RequisitoLegal extends Model
     protected $casts = [
         'fecha_cumplimiento' => 'date',
     ];
+
+    public function scopePorCategoria($query, $categoria)
+    {
+        return $query->where('categoria_norma', $categoria);
+    }
+
+    public function getCategoriaCompletaAttribute()
+    {
+        $categorias = [
+            'seguridad' => 'Normas de Seguridad',
+            'salud' => 'Normas de Salud',
+            'organizacion' => 'Normas de Organización'
+        ];
+
+        return $categorias[$this->categoria_norma] ?? 'Sin categoría';
+    }
 }

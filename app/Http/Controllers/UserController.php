@@ -10,18 +10,40 @@ use App\Http\Controllers\NotificationController;
 
 class UserController extends Controller
 {
-    /**
-     * Display a listing of the users.
-     */
     public function index(Request $request)
     {
-        // Verificar si el usuario es administrador
         if (session('user_rol') !== 'Administrador') {
             return redirect()->route('dashboard')->with('error', 'No tienes permisos para acceder a esta sección.');
         }
 
         $perPage = $request->get('per_page', 10);
-        $users = User::paginate($perPage);
+        
+        $query = User::query();
+
+        // Aplicar filtro de departamento con búsqueda parcial
+        if ($request->has('departamento') && !empty($request->departamento)) {
+            $query->where('departamento', 'LIKE', '%' . $request->departamento . '%');
+        }
+
+        // Aplicar filtro de rol
+        if ($request->has('rol') && !empty($request->rol)) {
+            $query->where('rol', $request->rol);
+        }
+
+        // Aplicar filtro de búsqueda
+        if ($request->has('search') && !empty($request->search)) {
+            $searchTerm = $request->search;
+            $query->where(function($q) use ($searchTerm) {
+                $q->where('nombre', 'LIKE', "%{$searchTerm}%")
+                ->orWhere('email', 'LIKE', "%{$searchTerm}%")
+                ->orWhere('username', 'LIKE', "%{$searchTerm}%");
+            });
+        }
+
+        $users = $query->paginate($perPage);
+
+        // Mantener los parámetros de filtro en la paginación
+        $users->appends($request->except('page'));
 
         // Obtener departamentos únicos para el datalist
         $departamentos = User::distinct('departamento')
@@ -34,9 +56,6 @@ class UserController extends Controller
         return view('users.index', compact('users', 'departamentos'));
     }
 
-    /**
-     * Show the form for creating a new user.
-     */
     public function create()
     {
         // Verificar si el usuario es administrador
@@ -55,9 +74,6 @@ class UserController extends Controller
         return view('users.create', compact('departamentos'));
     }
 
-    /**
-     * Store a newly created user in storage.
-     */
     public function store(Request $request)
     {
         // Verificar si el usuario es administrador
@@ -97,9 +113,6 @@ class UserController extends Controller
             ->with('success', 'Usuario creado exitosamente');
     }
 
-    /**
-     * Show the form for editing the specified user.
-     */
     public function edit(User $user)
     {
         // Verificar si el usuario es administrador
@@ -118,9 +131,6 @@ class UserController extends Controller
         return view('users.edit', compact('user', 'departamentos'));
     }
 
-    /**
-     * Update the specified user in storage.
-     */
     public function update(Request $request, User $user)
     {
         // Verificar si el usuario es administrador
@@ -236,9 +246,6 @@ class UserController extends Controller
         }
     }
 
-    /**
-     * Remove the specified user from storage.
-     */
     public function destroy(Request $request, User $user)
     {
         // Verificar si el usuario es administrador

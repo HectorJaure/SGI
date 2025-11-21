@@ -12,93 +12,88 @@ class RiskMatrixController extends Controller
 {
     public function matrix(Request $request)
     {
+        // Verificar permisos
+        if (session('user_rol') !== 'Administrador') {
+            return redirect()->route('dashboard')->with('error', 'No tienes permisos para acceder a esta sección.');
+        }
+
+        $perPage = $request->get('per_page', 10);
+        
+        // Iniciar consulta
         $query = Risk::query();
-        
-        // Aplicar filtros
-        if ($request->has('lugar') && $request->lugar != '') {
-            $query->where('lugar', $request->lugar);
+
+        // Aplicar filtros con búsqueda parcial
+        if ($request->has('lugar') && !empty($request->lugar)) {
+            $query->where('lugar', 'LIKE', '%' . $request->lugar . '%');
         }
-        
-        if ($request->has('actividad') && $request->actividad != '') {
-            $query->where('actividad', $request->actividad);
+
+        if ($request->has('actividad') && !empty($request->actividad)) {
+            $query->where('actividad', 'LIKE', '%' . $request->actividad . '%');
         }
-        
-        if ($request->has('tipo_riesgo') && $request->tipo_riesgo != '') {
+
+        if ($request->has('tipo_riesgo') && !empty($request->tipo_riesgo)) {
             $query->where('tipo_riesgo', $request->tipo_riesgo);
         }
-        
-        if ($request->has('clasificacion') && $request->clasificacion != '') {
+
+        if ($request->has('clasificacion') && !empty($request->clasificacion)) {
             $query->where('clasificacion', $request->clasificacion);
         }
 
-        if ($request->has('otros_factores') && $request->otros_factores != '') {
-            $query->where('otros_factores', $request->otros_factores);
-        }
-
-        if ($request->has('otros_factores') && $request->otros_factores != '') {
-            $queryForCounters->where('otros_factores', $request->otros_factores);
-        }
-        
-        if ($request->has('nivel_riesgo') && $request->nivel_riesgo != '') {
+        if ($request->has('nivel_riesgo') && !empty($request->nivel_riesgo)) {
             $query->where('nivel_riesgo', $request->nivel_riesgo);
         }
-        
-        $perPage = $request->get('per_page', 10);
-        $riesgos = $query->orderBy('lugar')->orderBy('actividad')->paginate($perPage);
-        
+
+        // Obtener riesgos paginados
+        $riesgos = $query->paginate($perPage);
+
+        // Mantener parámetros en la paginación
+        $riesgos->appends($request->except('page'));
+
+        // Obtener lugares únicos para el datalist
+        $lugares = Risk::distinct('lugar')
+            ->whereNotNull('lugar')
+            ->where('lugar', '!=', '')
+            ->orderBy('lugar')
+            ->pluck('lugar')
+            ->filter();
+
+        // Obtener actividades únicas para el datalist
+        $actividades = Risk::distinct('actividad')
+            ->whereNotNull('actividad')
+            ->where('actividad', '!=', '')
+            ->orderBy('actividad')
+            ->pluck('actividad')
+            ->filter();
+
+        // Calcular contadores de riesgo (sin filtros para mostrar totales reales)
+        $contadores = [
+            'bajo' => Risk::where('nivel_riesgo', 'baja')->count(),
+            'medio' => Risk::where('nivel_riesgo', 'media')->count(),
+            'alto' => Risk::where('nivel_riesgo', 'alta')->count(),
+            'muy_alto' => Risk::where('nivel_riesgo', 'muy-alta')->count(),
+        ];
+
         // Agrupar riesgos por lugar y actividad para la vista
         $riesgosAgrupados = [];
         foreach ($riesgos as $riesgo) {
-            $clave = $riesgo->lugar . '|' . $riesgo->actividad;
-            if (!isset($riesgosAgrupados[$clave])) {
-                $riesgosAgrupados[$clave] = [
+            $key = $riesgo->lugar . '|' . $riesgo->actividad;
+            if (!isset($riesgosAgrupados[$key])) {
+                $riesgosAgrupados[$key] = [
                     'lugar' => $riesgo->lugar,
                     'actividad' => $riesgo->actividad,
                     'riesgos' => []
                 ];
             }
-            $riesgosAgrupados[$clave]['riesgos'][] = $riesgo;
+            $riesgosAgrupados[$key]['riesgos'][] = $riesgo;
         }
-        
-        // Para los contadores necesitamos todos los registros (sin paginación)
-        $queryForCounters = Risk::query();
-        
-        // Aplicar los mismos filtros para los contadores
-        if ($request->has('lugar') && $request->lugar != '') {
-            $queryForCounters->where('lugar', $request->lugar);
-        }
-        
-        if ($request->has('actividad') && $request->actividad != '') {
-            $queryForCounters->where('actividad', $request->actividad);
-        }
-        
-        if ($request->has('tipo_riesgo') && $request->tipo_riesgo != '') {
-            $queryForCounters->where('tipo_riesgo', $request->tipo_riesgo);
-        }
-        
-        if ($request->has('clasificacion') && $request->clasificacion != '') {
-            $queryForCounters->where('clasificacion', $request->clasificacion);
-        }
-        
-        if ($request->has('nivel_riesgo') && $request->nivel_riesgo != '') {
-            $queryForCounters->where('nivel_riesgo', $request->nivel_riesgo);
-        }
-        
-        $riesgosForCounters = $queryForCounters->get();
-        
-        // Obtener datos para los filtros
-        $lugares = Risk::distinct('lugar')->pluck('lugar')->filter();
-        $actividades = Risk::distinct('actividad')->pluck('actividad')->filter();
-        
-        // Calcular contadores con los datos filtrados
-        $contadores = [
-            'bajo' => $riesgosForCounters->where('nivel_riesgo', 'baja')->count(),
-            'medio' => $riesgosForCounters->where('nivel_riesgo', 'media')->count(),
-            'alto' => $riesgosForCounters->where('nivel_riesgo', 'alta')->count(),
-            'muy_alto' => $riesgosForCounters->where('nivel_riesgo', 'muy-alta')->count(),
-        ];
-        
-        return view('risks.matrix', compact('riesgos', 'riesgosAgrupados', 'contadores', 'lugares', 'actividades'));
+
+        return view('risks.matrix', compact(
+            'riesgos', 
+            'riesgosAgrupados', 
+            'lugares', 
+            'actividades', 
+            'contadores'
+        ));
     }
 
     public function create()

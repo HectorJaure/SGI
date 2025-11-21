@@ -7,25 +7,22 @@
 @section('content')
 <div class="container-fluid">
     <div class="card">
-        <div class="card-header bg-primary text-white">
-            <h4 class="mb-0">
-                <i class="fas fa-file-word me-2"></i>
-                Instructivo para la Matriz de Seguridad y Salud Ocupacional
-            </h4>
-        </div>
         <div class="card-body">
             <div class="document-content">
-                <div class="document-section">
+                <!-- Sección 1: Propósito -->
+                <section class="document-section">
                     <h5 class="section-title">1. Propósito</h5>
                     <p>Conocer las indicaciones para la correcta interpretación y llenado de los requisitos establecidos en la Matriz de Seguridad para orientar y sistematizar las actividades.</p>
-                </div>
+                </section>
 
-                <div class="document-section">
+                <!-- Sección 2: Alcance -->
+                <section class="document-section">
                     <h5 class="section-title">2. Alcance</h5>
                     <p>El presente documento es aplicable para la gestión, implementación y seguimiento de los requisitos establecidos en la norma ISO 45001:2018 en materia de seguridad y salud ocupacional u otros criterios normativos aplicables.</p>
-                </div>
+                </section>
 
-                <div class="document-section">
+                <!-- Sección 3: Políticas de operación -->
+                <section class="document-section">
                     <h5 class="section-title">3. Políticas de operación</h5>
                     
                     <h6 class="subsection-title">De la matriz de seguridad</h6>
@@ -61,10 +58,60 @@
                             </ol>
                         </li>
                     </ol>
-                </div>
+                </section>
 
-                <div class="document-section">
-                    <h5 class="section-title">4. Glosario</h5>
+                <!-- Sección 4: Archivos de Ejemplo -->
+                <section class="document-section">
+                    <h5 class="section-title">4. Archivos de Ejemplo</h5>
+                    
+                    <!-- Contenedor para Matriz de Riesgo -->
+                    <div class="example-container mb-4">
+                        <div class="card border">
+                            <div class="card-header bg-light">
+                                <h6 class="mb-0">
+                                    <i class="fas fa-file-excel me-2 text-success"></i>
+                                    Ejemplo de Matriz de Riesgo
+                                </h6>
+                            </div>
+                            <div class="card-body">
+                                <p>Descargue el archivo de ejemplo para la Matriz de Riesgo en formato Excel.</p>
+                                
+                                <div class="d-flex gap-3 align-items-center">
+                                    <a href="{{ asset('documents/riesgos.xlsx') }}" class="btn btn-outline-success" download="riesgos.xlsx">
+                                        <i class="fas fa-download me-2"></i> Descargar riesgos.xlsx
+                                    </a>
+                                    <small class="text-muted">Formato: .xlsx (Excel)</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Contenedor para Matriz de Requisitos Legales -->
+                    <div class="example-container">
+                        <div class="card border">
+                            <div class="card-header bg-light">
+                                <h6 class="mb-0">
+                                    <i class="fas fa-file-excel me-2 text-success"></i>
+                                    Ejemplo de Matriz de Requisitos Legales
+                                </h6>
+                            </div>
+                            <div class="card-body">
+                                <p>Descargue el archivo de ejemplo para la Matriz de Requisitos Legales en formato Excel.</p>
+                                
+                                <div class="d-flex gap-3 align-items-center">
+                                    <a href="{{ asset('documents/requisitos_legales.xlsx') }}" class="btn btn-outline-success" download="requisitos_legales.xlsx">
+                                        <i class="fas fa-download me-2"></i> Descargar requisitos_legales.xlsx
+                                    </a>
+                                    <small class="text-muted">Formato: .xlsx (Excel)</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Sección 5: Glosario -->
+                <section class="document-section">
+                    <h5 class="section-title">5. Glosario</h5>
                     <div class="glossary-terms">
                         <div class="term">
                             <strong>Seguridad y salud:</strong> Son los programas, procedimientos, medidas y acciones de reconocimiento, evaluación y control que se aplican en los centros laborales para prevenir accidentes y enfermedades de trabajo, con el objeto de preservar la vida, salud e integridad física de los trabajadores, así como de evitar cualquier posible deterioro al centro de trabajo.
@@ -82,10 +129,11 @@
                             <strong>Incidente:</strong> Los acontecimientos que pueden o no ocasionar daños dando lugar a un accidente de los trabajadores.
                         </div>
                     </div>
-                </div>
+                </section>
 
-                <div class="document-section">
-                    <h5 class="section-title">5. Registros</h5>
+                <!-- Sección 6: Registros -->
+                <section class="document-section">
+                    <h5 class="section-title">6. Registros</h5>
                     <div class="table-responsive">
                         <table class="table table-bordered">
                             <thead>
@@ -124,14 +172,14 @@
                             </tbody>
                         </table>
                     </div>
-                </div>
+                </section>
             </div>
 
             <div class="mt-4 d-flex justify-content-between">
                 <a href="{{ asset('documents/instructivo_matriz_seguridad.docx') }}" 
                    class="btn btn-success"
                    download="Instructivo_Matriz_Seguridad_ITSN.docx">
-                    <i class="fas fa-download me-2"></i> Descargar Documento Word
+                    <i class="fas fa-download me-2"></i> Descargar Instructivo en Word
                 </a>
             </div>
         </div>
@@ -199,6 +247,10 @@ ol li {
     background-color: #2f855a;
     border-color: #2f855a;
     transform: translateY(-1px);
+}
+
+.example-container .card-header {
+    font-weight: 600;
 }
 
 @media print {

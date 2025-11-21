@@ -2,7 +2,7 @@
 
 @section('title', 'Matriz de Requisitos Legales - Sistema SGSST')
 
-@section('header-title', 'Matriz de Requisitos Legales - ISO 45001:2018')
+@section('header-title', "Matriz de Requisitos Legales - ISO 45001:2018")
 
 @section('content')
 <div class="container-fluid">
@@ -32,6 +32,7 @@
             $total = $requisitos->count();
             $cumplidos = $requisitos->where('cumplimiento', 'si')->count();
             $noCumplidos = $requisitos->where('cumplimiento', 'no')->count();
+            $sinEvaluar = $requisitos->whereNull('cumplimiento')->count();
             $porcentajeCumplido = $total > 0 ? round(($cumplidos / $total) * 100) : 0;
         @endphp
         <div class="risk-indicator risk-bajo">
@@ -47,8 +48,8 @@
             <div class="risk-label">Requisitos Pendientes</div>
         </div>
         <div class="risk-indicator risk-muy-alto">
-            <div class="risk-value">{{ $porcentajeCumplido }}%</div>
-            <div class="risk-label">Porcentaje Cumplimiento</div>
+            <div class="risk-value">{{ $sinEvaluar }}</div>
+            <div class="risk-label">Sin Evaluar</div>
         </div>
     </div>
 
@@ -71,6 +72,7 @@
                         <option value="">Todos los estados</option>
                         <option value="si" {{ request('cumplimiento') == 'si' ? 'selected' : '' }}>Cumplido</option>
                         <option value="no" {{ request('cumplimiento') == 'no' ? 'selected' : '' }}>No Cumplido</option>
+                        <option value="null" {{ request('cumplimiento') == 'null' ? 'selected' : '' }}>Sin Evaluar</option>
                     </select>
                 </div>
                 <div class="filter-group">
@@ -128,6 +130,7 @@
                         <option value="10" {{ request('per_page', 10) == 10 ? 'selected' : '' }}>10</option>
                         <option value="25" {{ request('per_page', 10) == 25 ? 'selected' : '' }}>25</option>
                         <option value="50" {{ request('per_page', 10) == 50 ? 'selected' : '' }}>50</option>
+                        <option value="1000" {{ request('per_page', 10) == 1000 ? 'selected' : '' }}>Mostrar todo</option>
                     </select>
                 </div>
             </div>
@@ -140,9 +143,9 @@
                     <th rowspan="2">Título</th>
                     <th rowspan="2">Tipo</th>
                     <th rowspan="2">No. Requisito</th>
-                    <th rowspan="2">Descripción</th>
+                    <th rowspan="2" class="descripcion-cell">Descripción</th>
                     <th colspan="3" class="subheader">CUMPLIMIENTO</th>
-                    <th rowspan="2">Peligro Asociado</th>
+                    <th rowspan="2" class="peligro-cell">Peligro Asociado</th>
                     <th rowspan="2">Fecha Cumplimiento</th>
                     <th rowspan="2">Responsables</th>
                     <th rowspan="2">Frecuencia Control</th>
@@ -162,7 +165,7 @@
                     <td>{{ $requisito->titulo }}</td>
                     <td>{{ $requisito->tipo_requisito }}</td>
                     <td>{{ $requisito->numero_requisito }}</td>
-                    <td class="peligro-cell">{{ Str::limit($requisito->descripcion, 100) }}</td>
+                    <td class="descripcion-cell">{{ $requisito->descripcion }}</td>
                     
                     @if($requisito->cumplimiento == 'si')
                         <td class="evaluation-cell">
@@ -170,16 +173,24 @@
                         </td>
                         <td class="evaluation-cell">{{ $requisito->evidencia ?: '-' }}</td>
                         <td class="evaluation-cell">-</td>
-                    @else
+                    @elseif($requisito->cumplimiento == 'no')
                         <td class="evaluation-cell">
                             <span class="significancia alta">PENDIENTE</span>
                         </td>
                         <td class="evaluation-cell">-</td>
                         <td class="evaluation-cell">{{ $requisito->acciones_no ?: '-' }}</td>
+                    @else
+                        <td class="evaluation-cell">
+                            <span class="significancia" style="background-color: #e2e8f0; color: #4a5568;">-</span>
+                        </td>
+                        <td class="evaluation-cell">-</td>
+                        <td class="evaluation-cell">-</td>
                     @endif
                     
-                    <td>{{ $requisito->peligro_asociado }}</td>
-                    <td class="evaluation-cell">{{ $requisito->fecha_cumplimiento->format('d/m/Y') }}</td>
+                    <td class="peligro-cell">{{ $requisito->peligro_asociado }}</td>
+                    <td class="evaluation-cell">
+                        {{ $requisito->fecha_cumplimiento ? $requisito->fecha_cumplimiento->format('d/m/Y') : '' }}
+                    </td>
                     <td>{{ $requisito->responsables }}</td>
                     <td class="evaluation-cell">{{ $requisito->frecuencia_control }}</td>
                     <td>{{ $requisito->responsable_control }}</td>
@@ -463,6 +474,7 @@
         min-width: 1600px;
         border-radius: 8px;
         overflow: hidden;
+        table-layout: fixed;
     }
 
     th {
@@ -500,12 +512,6 @@
         color: white !important;
         text-align: center;
         font-weight: 600;
-    }
-
-    .peligro-cell {
-        max-width: 300px;
-        min-width: 280px;
-        text-align: left !important;
     }
 
     .evaluation-cell {
@@ -694,10 +700,6 @@
     th, td {
         text-align: center !important;
         vertical-align: middle !important;
-    }
-
-    .peligro-cell {
-        text-align: left !important;
     }
 
     th[rowspan] {
