@@ -58,6 +58,15 @@
         <form method="GET" action="{{ route('requisitos-legales.index') }}">
             <div class="filter-row">
                 <div class="filter-group">
+                    <label for="filtro-categoria">Categoría de Norma</label>
+                    <select id="filtro-categoria" name="categoria_norma">
+                        <option value="">Todas las categorías</option>
+                        <option value="seguridad" {{ request('categoria_norma') == 'seguridad' ? 'selected' : '' }}>Normas de Seguridad</option>
+                        <option value="salud" {{ request('categoria_norma') == 'salud' ? 'selected' : '' }}>Normas de Salud</option>
+                        <option value="organizacion" {{ request('categoria_norma') == 'organizacion' ? 'selected' : '' }}>Normas de Organización</option>
+                    </select>
+                </div>
+                <div class="filter-group">
                     <label for="filtro-norma">Norma</label>
                     <select id="filtro-norma" name="norma">
                         <option value="">Todas las normas</option>
@@ -116,7 +125,7 @@
         </form>
     </div>
 
-    <!-- Tabla de Requisitos -->
+    <!-- Tabla de Requisitos - CON TAMAÑOS ADAPTADOS Y ESTRUCTURA ORIGINAL -->
     <div class="matrix-container">
         <div class="matrix-header">
             <h3 class="section-title">Lista de Requisitos Legales</h3>
@@ -139,87 +148,103 @@
         <table>
             <thead>
                 <tr>
-                    <th rowspan="2">Norma</th>
-                    <th rowspan="2">Título</th>
-                    <th rowspan="2">Tipo</th>
-                    <th rowspan="2">No. Requisito</th>
-                    <th rowspan="2" class="descripcion-cell">Descripción</th>
+                    <th rowspan="2" style="width: 120px;">Norma</th>
+                    <th rowspan="2" style="width: 200px;">Título</th>
+                    <th rowspan="2" style="width: 150px;">Tipo</th>
+                    <th rowspan="2" style="width: 100px;">No. Requisito</th>
+                    <th rowspan="2" style="width: 350px;">Descripción</th>
                     <th colspan="3" class="subheader">CUMPLIMIENTO</th>
-                    <th rowspan="2" class="peligro-cell">Peligro Asociado</th>
-                    <th rowspan="2">Fecha Cumplimiento</th>
-                    <th rowspan="2">Responsables</th>
-                    <th rowspan="2">Frecuencia Control</th>
-                    <th rowspan="2">Responsable Control</th>
-                    <th rowspan="2">Acciones</th>
+                    <th rowspan="2" style="width: 300px;">Peligro Asociado</th>
+                    <th rowspan="2" style="width: 120px;">Fecha Cumplimiento</th>
+                    <th rowspan="2" style="width: 150px;">Responsables</th>
+                    <th rowspan="2" style="width: 120px;">Frecuencia Control</th>
+                    <th rowspan="2" style="width: 150px;">Responsable Control</th>
+                    <th rowspan="2" style="width: 100px;">Acciones</th>
                 </tr>
                 <tr>
-                    <th class="category-header">Estado</th>
-                    <th class="category-header">Evidencia</th>
-                    <th class="category-header">Acciones No</th>
+                    <th class="category-header" style="width: 120px;">Estado</th>
+                    <th class="category-header" style="width: 350px;">Evidencia</th>
+                    <th class="category-header" style="width: 350px;">Acciones No</th>
                 </tr>
             </thead>
             <tbody>
+                @php
+                    $currentCategory = null;
+                @endphp
+                
                 @forelse($requisitos as $requisito)
-                <tr>
-                    <td><strong>{{ $requisito->norma }}</strong></td>
-                    <td>{{ $requisito->titulo }}</td>
-                    <td>{{ $requisito->tipo_requisito }}</td>
-                    <td>{{ $requisito->numero_requisito }}</td>
-                    <td class="descripcion-cell">{{ $requisito->descripcion }}</td>
-                    
-                    @if($requisito->cumplimiento == 'si')
-                        <td class="evaluation-cell">
-                            <span class="significancia baja">CUMPLIDO</span>
-                        </td>
-                        <td class="evaluation-cell">{{ $requisito->evidencia ?: '-' }}</td>
-                        <td class="evaluation-cell">-</td>
-                    @elseif($requisito->cumplimiento == 'no')
-                        <td class="evaluation-cell">
-                            <span class="significancia alta">PENDIENTE</span>
-                        </td>
-                        <td class="evaluation-cell">-</td>
-                        <td class="evaluation-cell">{{ $requisito->acciones_no ?: '-' }}</td>
-                    @else
-                        <td class="evaluation-cell">
-                            <span class="significancia" style="background-color: #e2e8f0; color: #4a5568;">-</span>
-                        </td>
-                        <td class="evaluation-cell">-</td>
-                        <td class="evaluation-cell">-</td>
+                    @if($requisito->categoria_norma != $currentCategory)
+                        @php
+                            $currentCategory = $requisito->categoria_norma;
+                            $categoriaNombre = $categoriasNorma[$currentCategory];
+                        @endphp
+                        <tr class="category-header-row">
+                            <td colspan="14" style="background-color: #2c5282; color: white; font-weight: bold; padding: 12px; text-align: center;">
+                                {{ strtoupper($categoriaNombre) }}
+                            </td>
+                        </tr>
                     @endif
-                    
-                    <td class="peligro-cell">{{ $requisito->peligro_asociado }}</td>
-                    <td class="evaluation-cell">
-                        {{ $requisito->fecha_cumplimiento ? $requisito->fecha_cumplimiento->format('d/m/Y') : '' }}
-                    </td>
-                    <td>{{ $requisito->responsables }}</td>
-                    <td class="evaluation-cell">{{ $requisito->frecuencia_control }}</td>
-                    <td>{{ $requisito->responsable_control }}</td>
-                    <td class="evaluation-cell">
-                        <div class="actions">
-                            <a href="{{ route('requisitos-legales.edit', $requisito->id) }}" 
-                               class="btn-icon btn-edit" title="Editar">
-                                <i class="fas fa-edit"></i>
-                            </a>
-                            <form action="{{ route('requisitos-legales.destroy', $requisito->id) }}" method="POST" class="d-inline">
-                                @csrf
-                                @method('DELETE')
-                                <button type="button" class="btn-icon btn-delete" 
-                                        onclick="mostrarModalEliminarRequisito({{ $requisito->id }}, '{{ addslashes($requisito->titulo) }} ({{ addslashes($requisito->norma) }})')"
-                                        title="Eliminar">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </form>
-                        </div>
-                    </td>
-                </tr>
+
+                    <tr>
+                        <td><strong>{{ $requisito->norma }}</strong></td>
+                        <td>{{ $requisito->titulo }}</td>
+                        <td>{{ $requisito->tipo_requisito }}</td>
+                        <td>{{ $requisito->numero_requisito }}</td>
+                        <td class="descripcion-cell">{{ $requisito->descripcion }}</td>
+                        
+                        @if($requisito->cumplimiento == 'si')
+                            <td class="evaluation-cell">
+                                <span class="significancia baja">CUMPLIDO</span>
+                            </td>
+                            <td class="evaluation-cell">{{ $requisito->evidencia ?: '' }}</td>
+                            <td class="evaluation-cell">-</td>
+                        @elseif($requisito->cumplimiento == 'no')
+                            <td class="evaluation-cell">
+                                <span class="significancia alta">PENDIENTE</span>
+                            </td>
+                            <td class="evaluation-cell"></td>
+                            <td class="evaluation-cell">{{ $requisito->acciones_no ?: '' }}</td>
+                        @else
+                            <td class="evaluation-cell">
+                                <span class="significancia" style="background-color: #e2e8f0; color: #4a5568;">SIN EVALUAR</span>
+                            </td>
+                            <td class="evaluation-cell"></td>
+                            <td class="evaluation-cell"></td>
+                        @endif
+                        
+                        <td class="peligro-cell">{{ $requisito->peligro_asociado }}</td>
+                        <td class="evaluation-cell">
+                            {{ $requisito->fecha_cumplimiento ? $requisito->fecha_cumplimiento->format('d/m/Y') : '' }}
+                        </td>
+                        <td>{{ $requisito->responsables }}</td>
+                        <td class="evaluation-cell">{{ $requisito->frecuencia_control }}</td>
+                        <td>{{ $requisito->responsable_control }}</td>
+                        <td class="evaluation-cell">
+                            <div class="actions">
+                                <a href="{{ route('requisitos-legales.edit', $requisito->id) }}" 
+                                class="btn-icon btn-edit" title="Editar">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <form action="{{ route('requisitos-legales.destroy', $requisito->id) }}" method="POST" class="d-inline">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="button" class="btn-icon btn-delete" 
+                                            onclick="mostrarModalEliminarRequisito({{ $requisito->id }}, '{{ addslashes($requisito->titulo) }} ({{ addslashes($requisito->norma) }})')"
+                                            title="Eliminar">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
                 @empty
-                <tr>
-                    <td colspan="14" class="text-center" style="padding: 20px;">
-                        <div class="alert alert-info">
-                            <i class="fas fa-info-circle"></i> No se encontraron requisitos legales
-                        </div>
-                    </td>
-                </tr>
+                    <tr>
+                        <td colspan="14" class="text-center" style="padding: 20px;">
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle"></i> No se encontraron requisitos legales
+                            </div>
+                        </td>
+                    </tr>
                 @endforelse
             </tbody>
         </table>
@@ -265,7 +290,7 @@
 
 @section('styles')
 <style>
-    /* Variables CSS (las mismas que en matrix.blade.php) */
+    /* Variables CSS */
     :root {
         --azul-marino: #1e3a5f;
         --azul-medio: #2c5282;
@@ -282,7 +307,114 @@
         --sombra-hover: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
     }
 
-    /* Botones (mismos estilos que matrix) */
+    /* Tabla con TAMAÑOS ADAPTADOS */
+    table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        min-width: 2400px; /* Aumentado para acomodar las columnas más anchas */
+        border-radius: 8px;
+        overflow: hidden;
+        table-layout: fixed;
+    }
+
+    .category-header-row {
+        background-color: var(--azul-medio) !important;
+        color: white !important;
+        font-weight: 700;
+        font-size: 1rem;
+    }
+
+    .category-header-row td {
+        border: none !important;
+        padding: 12px 10px !important;
+    }
+
+    .category-header-row:hover {
+        background-color: var(--azul-medio) !important;
+    }
+
+    th {
+        text-align: center;
+        padding: 14px 10px;
+        background-color: var(--gris-claro);
+        color: var(--gris-oscuro);
+        font-weight: 700;
+        font-size: 0.85rem;
+        border: 1px solid var(--gris-medio);
+    }
+
+    td {
+        padding: 12px 10px;
+        border-bottom: 1px solid var(--gris-claro);
+        font-size: 0.85rem;
+        border: 1px solid var(--gris-claro);
+        vertical-align: middle;
+        text-align: center;
+    }
+
+    tr:hover {
+        background-color: rgba(66, 153, 225, 0.03);
+    }
+
+    .subheader {
+        background-color: var(--azul-marino) !important;
+        color: white !important;
+        text-align: center;
+        font-weight: 700;
+    }
+
+    .category-header {
+        background-color: var(--azul-medio) !important;
+        color: white !important;
+        text-align: center;
+        font-weight: 600;
+    }
+
+    .evaluation-cell {
+        text-align: center;
+        font-weight: 600;
+    }
+
+    /* Significancia (para estados de cumplimiento) */
+    .significancia {
+        padding: 6px 8px;
+        border-radius: 6px;
+        font-size: 0.8rem;
+        text-align: center;
+        display: inline-block;
+        min-width: 60px;
+        border: 2px solid transparent;
+    }
+
+    .significancia.baja {
+        background-color: #c6f6d5;
+        color: #22543d;
+        border-color: #9ae6b4;
+    }
+
+    .significancia.alta {
+        background-color: #fed7d7;
+        color: #742a2a;
+        border-color: #feb2b2;
+    }
+
+    /* Celdas de texto largo */
+    .descripcion-cell {
+        text-align: left !important;
+        line-height: 1.4;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+    }
+
+    .peligro-cell {
+        text-align: left !important;
+        line-height: 1.4;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+    }
+
+    /* Resto de estilos originales */
     .btn {
         background-color: var(--azul-claro);
         color: white;
@@ -315,7 +447,6 @@
     .btn-secondary { background-color: var(--gris-medio); }
     .btn-secondary:hover { background-color: var(--gris-oscuro); }
 
-    /* Botones de acción (íconos) */
     .btn-icon {
         width: 32px;
         height: 32px;
@@ -349,7 +480,6 @@
         color: white;
     }
 
-    /* Indicadores de riesgo (mismo estilo que matrix) */
     .risk-indicators {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -390,7 +520,6 @@
         font-weight: 500;
     }
 
-    /* Filtros (mismo estilo que matrix) */
     .filters {
         background-color: var(--blanco);
         border-radius: 12px;
@@ -440,7 +569,6 @@
         box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
     }
 
-    /* Contenedor de matriz (mismo estilo que matrix) */
     .matrix-container {
         background-color: var(--blanco);
         border-radius: 12px;
@@ -466,84 +594,6 @@
         margin: 0;
     }
 
-    /* Tabla (mismo estilo que matrix) */
-    table {
-        width: 100%;
-        border-collapse: separate;
-        border-spacing: 0;
-        min-width: 1600px;
-        border-radius: 8px;
-        overflow: hidden;
-        table-layout: fixed;
-    }
-
-    th {
-        text-align: center;
-        padding: 14px 10px;
-        background-color: var(--gris-claro);
-        color: var(--gris-oscuro);
-        font-weight: 700;
-        font-size: 0.85rem;
-        border: 1px solid var(--gris-medio);
-    }
-
-    td {
-        padding: 12px 10px;
-        border-bottom: 1px solid var(--gris-claro);
-        font-size: 0.85rem;
-        border: 1px solid var(--gris-claro);
-        vertical-align: middle;
-        text-align: center;
-    }
-
-    tr:hover {
-        background-color: rgba(66, 153, 225, 0.03);
-    }
-
-    .subheader {
-        background-color: var(--azul-marino) !important;
-        color: white !important;
-        text-align: center;
-        font-weight: 700;
-    }
-
-    .category-header {
-        background-color: var(--azul-medio) !important;
-        color: white !important;
-        text-align: center;
-        font-weight: 600;
-    }
-
-    .evaluation-cell {
-        text-align: center;
-        font-weight: 600;
-    }
-
-    /* Significancia (para estados de cumplimiento) */
-    .significancia {
-        padding: 8px 12px;
-        border-radius: 6px;
-        font-size: 0.85rem;
-        font-weight: 700;
-        text-align: center;
-        display: inline-block;
-        min-width: 100px;
-        border: 2px solid transparent;
-    }
-
-    .significancia.baja {
-        background-color: #c6f6d5;
-        color: #22543d;
-        border-color: #9ae6b4;
-    }
-
-    .significancia.alta {
-        background-color: #fed7d7;
-        color: #742a2a;
-        border-color: #feb2b2;
-    }
-
-    /* Acciones */
     .actions {
         display: flex;
         gap: 6px;
@@ -551,7 +601,6 @@
         align-items: center;
     }
 
-    /* Alertas */
     .alert {
         padding: 15px 20px;
         border-radius: 8px;
@@ -582,7 +631,6 @@
         border-color: #bbdefb;
     }
 
-    /* Estilos para modales */
     .modal {
         display: none;
         position: fixed;
@@ -663,8 +711,7 @@
         color: #856404;
         border-color: #ffeaa7;
     }
-
-    /* Responsive */
+    
     @media (max-width: 768px) {
         .filter-row {
             grid-template-columns: 1fr;
@@ -705,6 +752,11 @@
     th[rowspan] {
         vertical-align: middle !important;
     }
+
+    /* Excepciones para celdas de texto largo */
+    .descripcion-cell, .peligro-cell {
+        text-align: left !important;
+    }
 </style>
 @endsection
 
@@ -729,5 +781,12 @@
             cerrarModalEliminar();
         }
     });
+
+    // Cambiar número de elementos por página
+    function changePerPage(value) {
+        const url = new URL(window.location.href);
+        url.searchParams.set('per_page', value);
+        window.location.href = url.toString();
+    }
 </script>
 @endsection

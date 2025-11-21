@@ -164,7 +164,7 @@
                 <i class="fas fa-exclamation-triangle me-2"></i>
                 <strong>Acción irreversible</strong>
             </div>
-            <p id="textoVerificarEliminar" class="mb-3">Para eliminar usuarios, debe verificar su identidad ingresando su contraseña actual.</p>
+            <p id="textoVerificarEliminar" class="mb-3">Para eliminar usuarios, debe verificar su identidad ingresando su contraseña.</p>
             <div class="form-group">
                 <label class="form-label">Contraseña Actual <span class="required">*</span></label>
                 <div class="password-container">

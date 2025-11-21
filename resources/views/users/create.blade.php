@@ -6,11 +6,6 @@
 
 @section('content')
 <div class="container">
-    <div class="form-header">
-        <h1>Crear Usuario</h1>
-        <p>Complete la información del nuevo usuario</p>
-    </div>
-
     <div class="form-body">
 
         <form method="POST" action="{{ route('users.store') }}" id="form-crear-usuario">

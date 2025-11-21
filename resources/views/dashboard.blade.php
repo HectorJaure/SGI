@@ -123,7 +123,7 @@
                             
                             <div class="chart-center">
                                 <div class="chart-total">{{ $metricas['total_riesgos'] }}</div>
-                                <div class="chart-label">Total Riesgos</div>
+                                <div class="chart-label">Total</div>
                             </div>
                         </div>
                         

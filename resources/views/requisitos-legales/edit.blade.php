@@ -1,7 +1,8 @@
 @extends('layouts.app')
 
 @section('title', 'Editar Requisito Legal')
-@section('page-title', 'Editar Requisito Legal')
+
+@section('header-title', 'Editar Requisito Legal - Sistema SGSST')
 
 @section('content')
 <div class="container-fluid">
@@ -12,17 +13,34 @@
                 @method('PUT')
                 
                 <div class="row mb-3">
-                    <div class="col-md-6">
+                    <div class="col-md-4">
+                        <label for="categoria_norma" class="form-label">Categoría de Norma *</label>
+                        <select name="categoria_norma" id="categoria_norma" class="form-select" required>
+                            <option value="">Seleccionar categoría</option>
+                            <option value="seguridad" {{ $requisito->categoria_norma == 'seguridad' ? 'selected' : '' }}>Normas de Seguridad</option>
+                            <option value="salud" {{ $requisito->categoria_norma == 'salud' ? 'selected' : '' }}>Normas de Salud</option>
+                            <option value="organizacion" {{ $requisito->categoria_norma == 'organizacion' ? 'selected' : '' }}>Normas de Organización</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-4">
                         <div class="form-group">
                             <label for="norma" class="form-label">Norma *</label>
                             <input list="normas-list" id="norma" name="norma" 
-                                   value="{{ old('norma', $requisito->norma) }}" 
-                                   placeholder="Selecciona o escribe una nueva norma"
-                                   class="form-control" required autocomplete="on">
+                                value="{{ old('norma', $requisito->norma) }}" 
+                                placeholder="Selecciona o escribe una nueva norma"
+                                class="form-control" required autocomplete="on">
                             <datalist id="normas-list">
-                                @foreach($normas as $norma)
-                                    <option value="{{ $norma }}">{{ $norma }}</option>
-                                @endforeach
+                                <option value="ISO 45001:2018">ISO 45001:2018</option>
+                                <option value="NOM-030-STPS">NOM-030-STPS</option>
+                                <option value="NOM-035-STPS">NOM-035-STPS</option>
+                                <option value="LFT">Ley Federal del Trabajo</option>
+                                <option value="Reglamento Federal">Reglamento Federal de Seguridad y Salud</option>
+                                @isset($normasExistentes)
+                                    @foreach($normasExistentes as $norma)
+                                        <option value="{{ $norma }}">{{ $norma }}</option>
+                                    @endforeach
+                                @endisset
                             </datalist>
                             @error('norma')
                                 <div class="text-danger">{{ $message }}</div>
@@ -30,17 +48,24 @@
                         </div>
                     </div>
                     
-                    <div class="col-md-6">
+                    <div class="col-md-4">
                         <div class="form-group">
                             <label for="tipo_requisito" class="form-label">Tipo de Requisito *</label>
                             <input list="tipos-requisito-list" id="tipo_requisito" name="tipo_requisito" 
-                                   value="{{ old('tipo_requisito', $requisito->tipo_requisito) }}" 
-                                   placeholder="Selecciona o escribe un nuevo tipo"
-                                   class="form-control" required autocomplete="on">
+                                value="{{ old('tipo_requisito', $requisito->tipo_requisito) }}" 
+                                placeholder="Selecciona o escribe un nuevo tipo"
+                                class="form-control" required autocomplete="on">
                             <datalist id="tipos-requisito-list">
-                                @foreach($tiposRequisito as $tipo)
-                                    <option value="{{ $tipo }}">{{ $tipo }}</option>
-                                @endforeach
+                                <option value="Requisito General">Requisito General</option>
+                                <option value="Requisito de Proceso">Requisito de Proceso</option>
+                                <option value="Requisito Legal">Requisito Legal</option>
+                                <option value="Requisito Documental">Requisito Documental</option>
+                                <option value="Requisito de Control">Requisito de Control</option>
+                                @isset($tiposRequisitoExistentes)
+                                    @foreach($tiposRequisitoExistentes as $tipo)
+                                        <option value="{{ $tipo }}">{{ $tipo }}</option>
+                                    @endforeach
+                                @endisset
                             </datalist>
                             @error('tipo_requisito')
                                 <div class="text-danger">{{ $message }}</div>
@@ -67,12 +92,6 @@
                 <div class="mb-3">
                     <label for="descripcion" class="form-label">Descripción *</label>
                     <textarea name="descripcion" id="descripcion" class="form-control" rows="3" required>{{ old('descripcion', $requisito->descripcion) }}</textarea>
-                </div>
-
-                <div class="mb-3">
-                    <label for="peligro_asociado" class="form-label">Peligro Asociado *</label>
-                    <input type="text" name="peligro_asociado" id="peligro_asociado" class="form-control" 
-                           value="{{ old('peligro_asociado', $requisito->peligro_asociado) }}" required>
                 </div>
 
                 <!-- Sección Cumplimiento -->
@@ -104,6 +123,17 @@
                                     </label>
                                 </div>
                             </div>
+                            <div class="col">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="cumplimiento" 
+                                           id="cumplimiento_null" value="" 
+                                           {{ old('cumplimiento', $requisito->cumplimiento) == '' || is_null(old('cumplimiento', $requisito->cumplimiento)) ? 'checked' : '' }} 
+                                           onchange="toggleCumplimiento()">
+                                    <label class="form-check-label" for="cumplimiento_null">
+                                        Sin evaluar
+                                    </label>
+                                </div>
+                            </div>
                         </div>
 
                         <div class="row">
@@ -123,6 +153,12 @@
                             </div>
                         </div>
                     </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="peligro_asociado" class="form-label">Peligro Asociado</label>
+                    <input type="text" name="peligro_asociado" id="peligro_asociado" class="form-control" 
+                           value="{{ old('peligro_asociado', $requisito->peligro_asociado) }}">
                 </div>
 
                 <div class="row mb-3">
@@ -247,24 +283,19 @@
     function toggleCumplimiento() {
         const cumplimientoSi = document.getElementById('cumplimiento_si');
         const cumplimientoNo = document.getElementById('cumplimiento_no');
+        const cumplimientoNull = document.getElementById('cumplimiento_null');
         const opcionSi = document.getElementById('opcion_si');
         const opcionNo = document.getElementById('opcion_no');
         
         if (cumplimientoSi.checked) {
             opcionSi.style.opacity = '1';
             opcionNo.style.opacity = '0.6';
-            document.getElementById('evidencia').required = false;
-            document.getElementById('acciones_no').required = false;
         } else if (cumplimientoNo.checked) {
             opcionSi.style.opacity = '0.6';
             opcionNo.style.opacity = '1';
-            document.getElementById('evidencia').required = false;
-            document.getElementById('acciones_no').required = false;
         } else {
             opcionSi.style.opacity = '0.6';
             opcionNo.style.opacity = '0.6';
-            document.getElementById('evidencia').required = false;
-            document.getElementById('acciones_no').required = false;
         }
     }
 
@@ -319,25 +350,15 @@
             valido = false;
         }
 
-        // Validar longitud máxima de campos
-        const validacionesLongitud = [
-            { campo: 'norma', max: 255 },
-            { campo: 'titulo', max: 255 },
-            { campo: 'tipo_requisito', max: 255 },
-            { campo: 'numero_requisito', max: 50 },
-            { campo: 'peligro_asociado', max: 255 },
-            { campo: 'responsables', max: 255 },
-            { campo: 'frecuencia_control', max: 100 },
-            { campo: 'responsable_control', max: 255 }
-        ];
-
-        validacionesLongitud.forEach(validacion => {
-            const campo = document.getElementById(validacion.campo);
-            if (campo && campo.value.length > validacion.max) {
-                mostrarError(campo, `No puede exceder ${validacion.max} caracteres`);
+        // Validar fecha de cumplimiento (no puede ser anterior a hoy si se proporciona)
+        const fechaCumplimiento = document.getElementById('fecha_cumplimiento');
+        if (fechaCumplimiento.value) {
+            const hoy = new Date().toISOString().split('T')[0];
+            if (fechaCumplimiento.value < hoy) {
+                mostrarError(fechaCumplimiento, 'No puede ser anterior a la fecha actual');
                 valido = false;
             }
-        });
+        }
 
         return valido;
     }
@@ -405,13 +426,15 @@
                     return false;
                 }
                 break;
-        }
-
-        // Validar longitud máxima
-        const maxLength = campo.getAttribute('maxlength');
-        if (maxLength && valor.length > parseInt(maxLength)) {
-            mostrarError(campo, `Máximo ${maxLength} caracteres`);
-            return false;
+            case 'fecha_cumplimiento':
+                if (valor) {
+                    const hoy = new Date().toISOString().split('T')[0];
+                    if (valor < hoy) {
+                        mostrarError(campo, 'No puede ser anterior a hoy');
+                        return false;
+                    }
+                }
+                break;
         }
 
         return true;

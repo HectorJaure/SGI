@@ -6,11 +6,6 @@
 
 @section('content')
 <div class="container">
-    <div class="form-header">
-        <h1>Editar Usuario</h1>
-        <p>Actualice la información del usuario</p>
-    </div>
-
     <div class="form-body">
         <!-- Mensajes del sistema -->
         @if(session('success'))
@@ -167,7 +162,7 @@
                             👁️
                         </button>
                     </div>
-                    <div class="form-help">Debe ingresar su contraseña actual para guardar los cambios.</div>
+                    <div class="form-help">Ingresar contraseña para guardar los cambios.</div>
                     @error('current_password')
                         <div class="form-help error">{{ $message }}</div>
                     @enderror

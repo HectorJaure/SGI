@@ -2,7 +2,7 @@
 
 @section('title', 'Editar Riesgo - Sistema SGSST')
 
-@section('page-title', 'Editar Riesgo')
+@section('header-title', 'Editar Riesgo - Sistema SGSST')
 
 @section('content')
 <div class="container-fluid">
