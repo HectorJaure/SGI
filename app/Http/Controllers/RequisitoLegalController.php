@@ -117,7 +117,10 @@ class RequisitoLegalController extends Controller
 
     public function create()
     {
-        return view('requisitos-legales.create');
+        $normasExistentes = RequisitoLegal::distinct('norma')->pluck('norma')->filter();
+        $tiposRequisitoExistentes = RequisitoLegal::distinct('tipo_requisito')->pluck('tipo_requisito')->filter();
+        
+        return view('requisitos-legales.create', compact('normasExistentes', 'tiposRequisitoExistentes'));
     }
 
     public function store(Request $request)
@@ -145,7 +148,7 @@ class RequisitoLegalController extends Controller
         $tipoNotificacion = $requisito->cumplimiento == 'no' ? 'warning' : 'success';
         
         NotificationController::createNotification(
-            'Nuevo Requisito Legal Registrado',
+            'Nuevo Requisito Legal Agregado',
             "Se ha agregado el requisito: {$requisito->titulo} ({$requisito->norma}). Cumplimiento: " . ($requisito->cumplimiento == 'si' ? 'Cumplido' : 'Pendiente'),
             $tipoNotificacion
         );
@@ -157,7 +160,10 @@ class RequisitoLegalController extends Controller
     public function edit($id)
     {
         $requisito = RequisitoLegal::findOrFail($id);
-        return view('requisitos-legales.edit', compact('requisito'));
+        $normasExistentes = RequisitoLegal::distinct('norma')->pluck('norma')->filter();
+        $tiposRequisitoExistentes = RequisitoLegal::distinct('tipo_requisito')->pluck('tipo_requisito')->filter();
+        
+        return view('requisitos-legales.edit', compact('requisito', 'normasExistentes', 'tiposRequisitoExistentes'));
     }
 
     public function update(Request $request, $id)

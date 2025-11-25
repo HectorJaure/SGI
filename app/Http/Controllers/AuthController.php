@@ -43,13 +43,15 @@ class AuthController extends Controller
             return redirect()->route('dashboard');
         }
 
-        return back()->with('error', 'Usuario o contraseña incorrectos.');
+        return back()
+            ->withInput($request->only('username'))
+            ->with('error', 'Usuario o contraseña incorrectos.');
     }
 
     public function logout(Request $request)
     {
         session()->flush();
         $request->session()->regenerate();
-        return redirect()->route('login');
+        return redirect()->route('home');
     }
 }

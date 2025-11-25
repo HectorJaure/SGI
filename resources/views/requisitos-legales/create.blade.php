@@ -8,7 +8,7 @@
 <div class="container-fluid">
     <div class="card">
         <div class="card-body">
-            <form action="{{ route('requisitos-legales.store') }}" method="POST">
+            <form action="{{ route('requisitos-legales.store') }}" method="POST" id="requisitoForm">
                 @csrf
                 <div class="row mb-3">
                     <div class="col-md-4">
@@ -110,7 +110,7 @@
                                     <input class="form-check-input" type="radio" name="cumplimiento" 
                                            id="cumplimiento_null" value="" onchange="toggleCumplimiento()" checked>
                                     <label class="form-check-label" for="cumplimiento_null">
-                                        Sin evaluar
+                                        SIN INCIDENTES
                                     </label>
                                 </div>
                             </div>
@@ -119,58 +119,72 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <div id="opcion_si" class="cumplimiento-option">
-                                    <label for="evidencia" class="form-label">Evidencia</label>
+                                    <label for="evidencia" class="form-label">Evidencia *</label>
                                     <textarea name="evidencia" id="evidencia" class="form-control" 
-                                              rows="3" placeholder="Describa la evidencia del cumplimiento..."></textarea>
+                                              rows="3" placeholder="Describa la evidencia del cumplimiento..." disabled></textarea>
+                                    <small class="text-muted">Este campo se habilita cuando selecciona "SI"</small>
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div id="opcion_no" class="cumplimiento-option">
-                                    <label for="acciones_no" class="form-label">Acciones Requeridas</label>
+                                    <label for="acciones_no" class="form-label">Acciones Requeridas *</label>
                                     <textarea name="acciones_no" id="acciones_no" class="form-control" 
-                                              rows="3" placeholder="Describa las acciones necesarias para el cumplimiento..."></textarea>
+                                              rows="3" placeholder="Describa las acciones necesarias para el cumplimiento..." disabled></textarea>
+                                    <small class="text-muted">Este campo se habilita cuando selecciona "NO"</small>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="mb-3">
-                    <label for="peligro_asociado" class="form-label">Peligro Asociado</label>
-                    <input type="text" name="peligro_asociado" id="peligro_asociado" class="form-control">
-                </div>
+                <!-- Campos opcionales que se bloquean en "Sin evaluar" -->
+                <div class="card mb-4">
+                    <div class="card-header bg-light">
+                        <h6 class="mb-0">Información Adicional</h6>
+                        <small class="text-muted">Solo habilitados y obligatorios cuando hay algun incidente relacionado</small>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="peligro_asociado" class="form-label">Peligro Asociado</label>
+                            <input type="text" name="peligro_asociado" id="peligro_asociado" class="form-control" disabled
+                                   placeholder="Describa el peligro asociado al requisito">
+                        </div>
 
-                <div class="row mb-3">
-                    <div class="col-md-4">
-                        <label for="fecha_cumplimiento" class="form-label">Fecha de cumplimiento</label>
-                        <input type="date" name="fecha_cumplimiento" id="fecha_cumplimiento" 
-                               class="form-control">
-                    </div>
-                    
-                    <div class="col-md-4">
-                        <label for="responsables" class="form-label">Responsable(s)</label>
-                        <input type="text" name="responsables" id="responsables" class="form-control">
-                    </div>
-                    
-                    <div class="col-md-4">
-                        <label for="frecuencia_control" class="form-label">Frecuencia del control</label>
-                        <select name="frecuencia_control" id="frecuencia_control" class="form-select">
-                            <option value="">Seleccionar frecuencia</option>
-                            <option value="Diaria">Diaria</option>
-                            <option value="Semanal">Semanal</option>
-                            <option value="Quincenal">Quincenal</option>
-                            <option value="Mensual">Mensual</option>
-                            <option value="Bimestral">Bimestral</option>
-                            <option value="Trimestral">Trimestral</option>
-                            <option value="Semestral">Semestral</option>
-                            <option value="Anual">Anual</option>
-                        </select>
-                    </div>
-                </div>
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <label for="fecha_cumplimiento" class="form-label">Fecha de cumplimiento</label>
+                                <input type="date" name="fecha_cumplimiento" id="fecha_cumplimiento" 
+                                       class="form-control" disabled>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <label for="responsables" class="form-label">Responsable(s)</label>
+                                <input type="text" name="responsables" id="responsables" class="form-control" disabled
+                                       placeholder="Nombre del responsable">
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <label for="frecuencia_control" class="form-label">Frecuencia del control</label>
+                                <select name="frecuencia_control" id="frecuencia_control" class="form-select" disabled>
+                                    <option value="">Seleccionar frecuencia</option>
+                                    <option value="Diaria">Diaria</option>
+                                    <option value="Semanal">Semanal</option>
+                                    <option value="Quincenal">Quincenal</option>
+                                    <option value="Mensual">Mensual</option>
+                                    <option value="Bimestral">Bimestral</option>
+                                    <option value="Trimestral">Trimestral</option>
+                                    <option value="Semestral">Semestral</option>
+                                    <option value="Anual">Anual</option>
+                                </select>
+                            </div>
+                        </div>
 
-                <div class="mb-4">
-                    <label for="responsable_control" class="form-label">Responsable(s) del control</label>
-                    <input type="text" name="responsable_control" id="responsable_control" class="form-control">
+                        <div class="mb-3">
+                            <label for="responsable_control" class="form-label">Responsable(s) del control</label>
+                            <input type="text" name="responsable_control" id="responsable_control" class="form-control" disabled
+                                   placeholder="Nombre del responsable del control">
+                        </div>
+                    </div>
                 </div>
 
                 <div class="d-flex justify-content-end">
@@ -209,6 +223,18 @@
         color: #2c5282;
     }
 
+    /* Estilos para campos deshabilitados */
+    .disabled-field {
+        background-color: #f7fafc !important;
+        border-color: #e2e8f0 !important;
+        color: #a0aec0 !important;
+        cursor: not-allowed !important;
+    }
+
+    .disabled-field::placeholder {
+        color: #cbd5e0 !important;
+    }
+
     /* Estilos para errores */
     .error {
         border-color: #e53e3e !important;
@@ -227,6 +253,17 @@
         margin-bottom: 1rem;
         position: relative;
     }
+
+    .text-muted {
+        font-size: 0.8rem;
+        margin-top: 4px;
+        display: block;
+    }
+
+    .text-danger {
+        color: #e53e3e;
+        font-weight: bold;
+    }
 </style>
 @endsection
 
@@ -239,33 +276,67 @@
         const opcionSi = document.getElementById('opcion_si');
         const opcionNo = document.getElementById('opcion_no');
         
+        // Obtener todos los campos de información adicional
+        const camposInformacionAdicional = [
+            'peligro_asociado', 'fecha_cumplimiento', 'responsables', 
+            'frecuencia_control', 'responsable_control'
+        ];
+        
         if (cumplimientoSi.checked) {
+            // HABILITAR campos para "SI"
             opcionSi.style.opacity = '1';
             opcionNo.style.opacity = '0.6';
+            document.getElementById('evidencia').disabled = false;
+            document.getElementById('acciones_no').disabled = true;
+            
+            // HABILITAR campos de información adicional y hacerlos requeridos
+            camposInformacionAdicional.forEach(campo => {
+                const elemento = document.getElementById(campo);
+                elemento.disabled = false;
+                elemento.classList.remove('disabled-field');
+                elemento.required = true; // Hacer requerido
+            });
+            
         } else if (cumplimientoNo.checked) {
+            // HABILITAR campos para "NO"
             opcionSi.style.opacity = '0.6';
             opcionNo.style.opacity = '1';
+            document.getElementById('evidencia').disabled = true;
+            document.getElementById('acciones_no').disabled = false;
+            
+            // HABILITAR campos de información adicional y hacerlos requeridos
+            camposInformacionAdicional.forEach(campo => {
+                const elemento = document.getElementById(campo);
+                elemento.disabled = false;
+                elemento.classList.remove('disabled-field');
+                elemento.required = true; // Hacer requerido
+            });
+            
         } else {
+            // DESHABILITAR campos para "Sin evaluar" y quitar requerido
             opcionSi.style.opacity = '0.6';
             opcionNo.style.opacity = '0.6';
+            document.getElementById('evidencia').disabled = true;
+            document.getElementById('acciones_no').disabled = true;
+            
+            // DESHABILITAR campos de información adicional y quitar requerido
+            camposInformacionAdicional.forEach(campo => {
+                const elemento = document.getElementById(campo);
+                elemento.disabled = true;
+                elemento.classList.add('disabled-field');
+                elemento.required = false; // Quitar requerido
+            });
         }
     }
 
-    // Función para mostrar mensajes de error debajo de cada campo
+    // Función para mostrar mensajes de error
     function mostrarError(campo, mensaje) {
-        // Remover error anterior
         removerError(campo);
-        
-        // Agregar clase de error al campo
         campo.classList.add('error');
-        
-        // Crear elemento de mensaje de error
         const errorDiv = document.createElement('div');
         errorDiv.className = 'error-message';
         errorDiv.id = `error-${campo.id}`;
         errorDiv.textContent = mensaje;
-        
-        // Insertar después del campo
         campo.parentNode.appendChild(errorDiv);
     }
 
@@ -279,7 +350,7 @@
 
     // Validaciones del formulario
     function validarFormularioRequisito() {
-        const formulario = document.querySelector('form');
+        const formulario = document.getElementById('requisitoForm');
         const camposRequeridos = formulario.querySelectorAll('[required]');
         let valido = true;
 
@@ -287,24 +358,44 @@
         formulario.querySelectorAll('.error-message').forEach(error => error.remove());
         formulario.querySelectorAll('.error').forEach(campo => campo.classList.remove('error'));
 
-        // Validar campos requeridos
+        // Validar campos requeridos (incluyendo los que se activan dinámicamente)
         camposRequeridos.forEach(campo => {
-            if (!campo.value.trim()) {
+            if (!campo.disabled && !campo.value.trim()) {
                 mostrarError(campo, 'Este campo es obligatorio');
                 valido = false;
             }
         });
 
-        // Validar número de requisito (formato: número.punto.número)
+        // Validar campos condicionales según cumplimiento
+        const cumplimientoSi = document.getElementById('cumplimiento_si').checked;
+        const cumplimientoNo = document.getElementById('cumplimiento_no').checked;
+
+        if (cumplimientoSi) {
+            const evidencia = document.getElementById('evidencia');
+            if (!evidencia.value.trim()) {
+                mostrarError(evidencia, 'La evidencia es obligatoria cuando el requisito se cumple');
+                valido = false;
+            }
+        }
+
+        if (cumplimientoNo) {
+            const accionesNo = document.getElementById('acciones_no');
+            if (!accionesNo.value.trim()) {
+                mostrarError(accionesNo, 'Las acciones requeridas son obligatorias cuando el requisito no se cumple');
+                valido = false;
+            }
+        }
+
+        // Validar número de requisito
         const numeroRequisito = document.getElementById('numero_requisito');
         if (numeroRequisito.value && !/^[\d\.]+$/.test(numeroRequisito.value)) {
             mostrarError(numeroRequisito, 'Solo puede contener números y puntos');
             valido = false;
         }
 
-        // Validar fecha de cumplimiento (no puede ser anterior a hoy si se proporciona)
+        // Validar fecha de cumplimiento
         const fechaCumplimiento = document.getElementById('fecha_cumplimiento');
-        if (fechaCumplimiento.value) {
+        if (fechaCumplimiento.value && !fechaCumplimiento.disabled) {
             const hoy = new Date().toISOString().split('T')[0];
             if (fechaCumplimiento.value < hoy) {
                 mostrarError(fechaCumplimiento, 'No puede ser anterior a la fecha actual');
@@ -319,7 +410,6 @@
     document.addEventListener('DOMContentLoaded', function() {
         toggleCumplimiento();
         
-        // Agregar estilos para las opciones de cumplimiento
         const opcionSi = document.getElementById('opcion_si');
         const opcionNo = document.getElementById('opcion_no');
         
@@ -330,47 +420,52 @@
         const campos = document.querySelectorAll('input, select, textarea');
         campos.forEach(campo => {
             campo.addEventListener('blur', function() {
-                validarCampo(this);
+                if (!this.disabled) {
+                    validarCampo(this);
+                }
             });
             
-            // Validación inmediata para campos de texto
-            if (campo.type === 'text' || campo.type === 'textarea') {
+            if ((campo.type === 'text' || campo.type === 'textarea') && !campo.disabled) {
                 campo.addEventListener('input', function() {
                     validarCampo(this);
                 });
             }
         });
 
-        // Prevenir envío del formulario si no es válido
-        const formulario = document.querySelector('form');
+        // Interceptar el envío del formulario
+        const formulario = document.getElementById('requisitoForm');
         if (formulario) {
             formulario.addEventListener('submit', function(e) {
+                // Prevenir envío normal
+                e.preventDefault();
+
+                // Validar formulario
                 if (!validarFormularioRequisito()) {
-                    e.preventDefault();
-                    // Hacer scroll al primer error
                     const primerError = formulario.querySelector('.error');
                     if (primerError) {
                         primerError.scrollIntoView({ behavior: 'smooth', block: 'center' });
                     }
+                    return;
                 }
+
+                // Si pasa validación, enviar formulario
+                formulario.submit();
             });
         }
     });
 
     // Validación individual de campos
     function validarCampo(campo) {
-        const valor = campo.value.trim();
+        if (campo.disabled) return true;
         
-        // Limpiar error previo
+        const valor = campo.value.trim();
         removerError(campo);
         
-        // Validar campo requerido
         if (campo.hasAttribute('required') && !valor) {
             mostrarError(campo, 'Este campo es obligatorio');
             return false;
         }
 
-        // Validaciones específicas por tipo de campo
         switch(campo.id) {
             case 'numero_requisito':
                 if (valor && !/^[\d\.]+$/.test(valor)) {

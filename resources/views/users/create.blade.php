@@ -106,8 +106,8 @@
                         <input type="password" name="password" class="form-input @error('password') error @enderror" 
                                placeholder="Mínimo 6 caracteres" required
                                minlength="6" id="password-input">
-                        <button type="button" class="toggle-password" onclick="togglePassword(this)">
-                            👁️
+                        <button type="button" class="password-toggle" id="togglePassword">
+                            <i class="fas fa-eye"></i>
                         </button>
                     </div>
                     <div class="password-strength">
@@ -127,8 +127,8 @@
                         <input type="password" name="password_confirmation" class="form-input @error('password_confirmation') error @enderror" 
                                placeholder="Repita la contraseña" required
                                minlength="6" id="confirm-password-input">
-                        <button type="button" class="toggle-password" onclick="togglePassword(this)">
-                            👁️
+                        <button type="button" class="password-toggle" id="toggleConfirmPassword">
+                            <i class="fas fa-eye"></i>
                         </button>
                     </div>
                     @error('password_confirmation')
@@ -258,12 +258,12 @@
         background-color: white;
     }
 
-    /* Password container */
+    /* Password container - ESTILOS MEJORADOS */
     .password-container {
         position: relative;
     }
 
-    .toggle-password {
+    .password-toggle {
         position: absolute;
         right: 12px;
         top: 50%;
@@ -272,7 +272,35 @@
         border: none;
         color: #7f8c8d;
         cursor: pointer;
-        padding: 4px;
+        padding: 6px;
+        border-radius: 4px;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        z-index: 2;
+    }
+
+    .password-toggle:hover {
+        background-color: #e1e8ed;
+        color: #3498db;
+    }
+
+    .password-toggle:focus {
+        outline: none;
+        box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.3);
+    }
+
+    .password-toggle.active {
+        color: #3498db;
+        background-color: #e3f2fd;
+    }
+
+    /* Ajustar padding para inputs de contraseña */
+    .password-container .form-input {
+        padding-right: 50px;
     }
 
     /* Password strength */
@@ -360,8 +388,6 @@
         font-weight: 500;
     }
 
-
-
     /* Responsive */
     @media (max-width: 768px) {
         .form-grid {
@@ -386,233 +412,281 @@
         }
     }
 </style>
+
+<!-- Agregar Font Awesome para los íconos -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 @endsection
 
 @section('scripts')
 <script>
-    // Toggle password visibility
-    function togglePassword(button) {
-        const input = button.parentElement.querySelector('input');
+    // Toggle password visibility - FUNCIÓN MEJORADA
+    function togglePassword(button, inputId) {
+        const input = document.getElementById(inputId);
+        const icon = button.querySelector('i');
+        
         if (input.type === 'password') {
             input.type = 'text';
-            button.textContent = '🔒';
+            icon.classList.remove('fa-eye');
+            icon.classList.add('fa-eye-slash');
+            button.classList.add('active');
+            button.setAttribute('aria-label', 'Ocultar contraseña');
         } else {
             input.type = 'password';
-            button.textContent = '👁️';
+            icon.classList.remove('fa-eye-slash');
+            icon.classList.add('fa-eye');
+            button.classList.remove('active');
+            button.setAttribute('aria-label', 'Mostrar contraseña');
         }
+        
+        // Mantener el foco en el input
+        input.focus();
     }
 
-    function mostrarError(campo, mensaje) {
-        removerError(campo);
-        
-        campo.classList.add('error');
-        
-        const errorDiv = document.createElement('div');
-        errorDiv.className = 'error-message';
-        errorDiv.id = `error-${campo.id || campo.name}`;
-        errorDiv.textContent = mensaje;
-        
-        campo.parentNode.appendChild(errorDiv);
-    }
-
-    function removerError(campo) {
-        campo.classList.remove('error');
-        const errorId = `error-${campo.id || campo.name}`;
-        const errorExistente = document.getElementById(errorId);
-        if (errorExistente) {
-            errorExistente.remove();
-        }
-    }
-
-    // Check password strength
-    function checkPasswordStrength(password) {
-        const strengthBar = document.getElementById('strength-bar');
-        const strengthText = document.getElementById('strength-text');
-        
-        let strength = 0;
-        let text = 'Muy débil';
-        let className = 'strength-weak';
-
-        if (password.length >= 6) strength++;
-        if (password.length >= 8) strength++;
-        if (/[A-Z]/.test(password)) strength++;
-        if (/[0-9]/.test(password)) strength++;
-        if (/[^A-Za-z0-9]/.test(password)) strength++;
-
-        switch (strength) {
-            case 0:
-            case 1:
-                text = 'Débil';
-                className = 'strength-weak';
-                break;
-            case 2:
-            case 3:
-                text = 'Media';
-                className = 'strength-medium';
-                break;
-            case 4:
-            case 5:
-                text = 'Fuerte';
-                className = 'strength-strong';
-                break;
+    // Inicializar toggles de contraseña
+    document.addEventListener('DOMContentLoaded', function() {
+        // Configurar toggle para contraseña principal
+        const togglePasswordBtn = document.getElementById('togglePassword');
+        if (togglePasswordBtn) {
+            togglePasswordBtn.addEventListener('click', function() {
+                togglePassword(this, 'password-input');
+            });
+            
+            // Accesibilidad con teclado
+            togglePasswordBtn.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    togglePassword(this, 'password-input');
+                }
+            });
         }
 
-        strengthBar.className = 'strength-bar ' + className;
-        strengthText.textContent = text;
-    }
+        // Configurar toggle para confirmar contraseña
+        const toggleConfirmPasswordBtn = document.getElementById('toggleConfirmPassword');
+        if (toggleConfirmPasswordBtn) {
+            toggleConfirmPasswordBtn.addEventListener('click', function() {
+                togglePassword(this, 'confirm-password-input');
+            });
+            
+            // Accesibilidad con teclado
+            toggleConfirmPasswordBtn.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    togglePassword(this, 'confirm-password-input');
+                }
+            });
+        }
 
-    // Validación simple del campo nombre (solo formato)
-    function validarNombre(campo) {
-        const valor = campo.value.trim();
-        
-        // Limpiar error previo
-        removerError(campo);
-        
-        // Si el campo está vacío, no mostrar error de formato
-        if (!valor) {
+        // El resto de tu código JavaScript existente...
+        function mostrarError(campo, mensaje) {
+            removerError(campo);
+            
+            campo.classList.add('error');
+            
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error-message';
+            errorDiv.id = `error-${campo.id || campo.name}`;
+            errorDiv.textContent = mensaje;
+            
+            campo.parentNode.appendChild(errorDiv);
+        }
+
+        function removerError(campo) {
+            campo.classList.remove('error');
+            const errorId = `error-${campo.id || campo.name}`;
+            const errorExistente = document.getElementById(errorId);
+            if (errorExistente) {
+                errorExistente.remove();
+            }
+        }
+
+        // Check password strength
+        function checkPasswordStrength(password) {
+            const strengthBar = document.getElementById('strength-bar');
+            const strengthText = document.getElementById('strength-text');
+            
+            let strength = 0;
+            let text = 'Muy débil';
+            let className = 'strength-weak';
+
+            if (password.length >= 6) strength++;
+            if (password.length >= 8) strength++;
+            if (/[A-Z]/.test(password)) strength++;
+            if (/[0-9]/.test(password)) strength++;
+            if (/[^A-Za-z0-9]/.test(password)) strength++;
+
+            switch (strength) {
+                case 0:
+                case 1:
+                    text = 'Débil';
+                    className = 'strength-weak';
+                    break;
+                case 2:
+                case 3:
+                    text = 'Media';
+                    className = 'strength-medium';
+                    break;
+                case 4:
+                case 5:
+                    text = 'Fuerte';
+                    className = 'strength-strong';
+                    break;
+            }
+
+            strengthBar.className = 'strength-bar ' + className;
+            strengthText.textContent = text;
+        }
+
+        // Validación simple del campo nombre (solo formato)
+        function validarNombre(campo) {
+            const valor = campo.value.trim();
+            
+            // Limpiar error previo
+            removerError(campo);
+            
+            // Si el campo está vacío, no mostrar error de formato
+            if (!valor) {
+                return true;
+            }
+
+            // Validar que solo contenga letras, espacios y acentos
+            if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/.test(valor)) {
+                mostrarError(campo, 'El formato del campo nombre no es válido. Solo se permiten letras y espacios.');
+                return false;
+            }
+
             return true;
         }
 
-        // Validar que solo contenga letras, espacios y acentos
-        if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/.test(valor)) {
-            mostrarError(campo, 'El formato del campo nombre no es válido. Solo se permiten letras y espacios.');
-            return false;
-        }
-
-        return true;
-    }
-
-    // Validación específica para contraseñas
-    function validarPassword(password, confirmPassword) {
-        let valido = true;
-        
-        // Limpiar errores previos
-        removerError(password);
-        removerError(confirmPassword);
-
-        if (password && password.value) {
-            // Validar longitud de contraseña principal
-            if (password.value.length < 6) {
-                mostrarError(password, 'La contraseña debe tener al menos 6 caracteres');
-                valido = false;
-            }
+        // Validación específica para contraseñas
+        function validarPassword(password, confirmPassword) {
+            let valido = true;
             
-            // Validar coincidencia solo si confirmPassword tiene valor
-            if (confirmPassword && confirmPassword.value) {
-                if (password.value !== confirmPassword.value) {
-                    mostrarError(confirmPassword, 'Las contraseñas no coinciden');
+            // Limpiar errores previos
+            removerError(password);
+            removerError(confirmPassword);
+
+            if (password && password.value) {
+                // Validar longitud de contraseña principal
+                if (password.value.length < 6) {
+                    mostrarError(password, 'La contraseña debe tener al menos 6 caracteres');
                     valido = false;
                 }
-            }
-        }
-        
-        return valido;
-    }
-
-    // Guardar contraseñas temporalmente
-    function guardarContraseñasTemporalmente(formulario) {
-        const password = formulario.querySelector('[name="password"]');
-        const confirmPassword = formulario.querySelector('[name="password_confirmation"]');
-        
-        if (password && password.value) {
-            sessionStorage.setItem('tempPassword', password.value);
-        }
-        if (confirmPassword && confirmPassword.value) {
-            sessionStorage.setItem('tempConfirmPassword', confirmPassword.value);
-        }
-    }
-
-    // Restaurar contraseñas temporalmente
-    function restaurarContraseñasTemporalmente(formulario) {
-        const tempPassword = sessionStorage.getItem('tempPassword');
-        const tempConfirmPassword = sessionStorage.getItem('tempConfirmPassword');
-        
-        const password = formulario.querySelector('[name="password"]');
-        const confirmPassword = formulario.querySelector('[name="password_confirmation"]');
-        
-        if (tempPassword && password) {
-            password.value = tempPassword;
-        }
-        if (tempConfirmPassword && confirmPassword) {
-            confirmPassword.value = tempConfirmPassword;
-        }
-        
-        // Limpiar almacenamiento temporal
-        sessionStorage.removeItem('tempPassword');
-        sessionStorage.removeItem('tempConfirmPassword');
-    }
-
-    // Validación del formulario completo al enviar
-    function validarFormularioUsuario(event) {
-        const formulario = event.target;
-        let valido = true;
-
-        // Guardar contraseñas antes de la validación
-        guardarContraseñasTemporalmente(formulario);
-
-        // Limpiar todos los errores previos
-        formulario.querySelectorAll('.error-message').forEach(error => error.remove());
-        formulario.querySelectorAll('.error').forEach(campo => campo.classList.remove('error'));
-
-        // Validar campos requeridos
-        const camposRequeridos = ['nombre', 'username', 'email', 'rol'];
-        camposRequeridos.forEach(campoName => {
-            const campo = formulario.querySelector(`[name="${campoName}"]`);
-            if (campo && !campo.value.trim()) {
-                mostrarError(campo, 'Este campo es obligatorio');
-                valido = false;
-            }
-        });
-
-        // Validar formato de email
-        const email = formulario.querySelector('[name="email"]');
-        if (email && email.value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value)) {
-            mostrarError(email, 'El formato del correo electrónico no es válido');
-            valido = false;
-        }
-
-        // Validar formato de nombre (solo si tiene valor)
-        const nombre = formulario.querySelector('[name="nombre"]');
-        if (nombre && nombre.value && !/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/.test(nombre.value)) {
-            mostrarError(nombre, 'El formato del campo nombre no es válido. Solo se permiten letras y espacios.');
-            valido = false;
-        }
-
-        // Validar contraseñas (solo si se están cambiando)
-        const password = formulario.querySelector('[name="password"]');
-        const confirmPassword = formulario.querySelector('[name="password_confirmation"]');
-        
-        if (password && password.value) {
-            if (!validarPassword(password, confirmPassword)) {
-                valido = false;
-            }
-        }
-
-        // Si no es válido, prevenir envío y restaurar contraseñas
-        if (!valido) {
-            event.preventDefault();
-            
-            // Pequeño delay para asegurar que las contraseñas se restauren después del preventDefault
-            setTimeout(() => {
-                restaurarContraseñasTemporalmente(formulario);
                 
-                // Hacer scroll al primer error
-                const primerError = formulario.querySelector('.error');
-                if (primerError) {
-                    primerError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                // Validar coincidencia solo si confirmPassword tiene valor
+                if (confirmPassword && confirmPassword.value) {
+                    if (password.value !== confirmPassword.value) {
+                        mostrarError(confirmPassword, 'Las contraseñas no coinciden');
+                        valido = false;
+                    }
                 }
-            }, 100);
-        } else {
-            // Si es válido, limpiar el almacenamiento temporal
+            }
+            
+            return valido;
+        }
+
+        // Guardar contraseñas temporalmente
+        function guardarContraseñasTemporalmente(formulario) {
+            const password = formulario.querySelector('[name="password"]');
+            const confirmPassword = formulario.querySelector('[name="password_confirmation"]');
+            
+            if (password && password.value) {
+                sessionStorage.setItem('tempPassword', password.value);
+            }
+            if (confirmPassword && confirmPassword.value) {
+                sessionStorage.setItem('tempConfirmPassword', confirmPassword.value);
+            }
+        }
+
+        // Restaurar contraseñas temporalmente
+        function restaurarContraseñasTemporalmente(formulario) {
+            const tempPassword = sessionStorage.getItem('tempPassword');
+            const tempConfirmPassword = sessionStorage.getItem('tempConfirmPassword');
+            
+            const password = formulario.querySelector('[name="password"]');
+            const confirmPassword = formulario.querySelector('[name="password_confirmation"]');
+            
+            if (tempPassword && password) {
+                password.value = tempPassword;
+            }
+            if (tempConfirmPassword && confirmPassword) {
+                confirmPassword.value = tempConfirmPassword;
+            }
+            
+            // Limpiar almacenamiento temporal
             sessionStorage.removeItem('tempPassword');
             sessionStorage.removeItem('tempConfirmPassword');
         }
 
-        return valido;
-    }
+        // Validación del formulario completo al enviar
+        function validarFormularioUsuario(event) {
+            const formulario = event.target;
+            let valido = true;
 
-    // Inicialización cuando el DOM está listo
-    document.addEventListener('DOMContentLoaded', function() {
+            // Guardar contraseñas antes de la validación
+            guardarContraseñasTemporalmente(formulario);
+
+            // Limpiar todos los errores previos
+            formulario.querySelectorAll('.error-message').forEach(error => error.remove());
+            formulario.querySelectorAll('.error').forEach(campo => campo.classList.remove('error'));
+
+            // Validar campos requeridos
+            const camposRequeridos = ['nombre', 'username', 'email', 'rol'];
+            camposRequeridos.forEach(campoName => {
+                const campo = formulario.querySelector(`[name="${campoName}"]`);
+                if (campo && !campo.value.trim()) {
+                    mostrarError(campo, 'Este campo es obligatorio');
+                    valido = false;
+                }
+            });
+
+            // Validar formato de email
+            const email = formulario.querySelector('[name="email"]');
+            if (email && email.value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value)) {
+                mostrarError(email, 'El formato del correo electrónico no es válido');
+                valido = false;
+            }
+
+            // Validar formato de nombre (solo si tiene valor)
+            const nombre = formulario.querySelector('[name="nombre"]');
+            if (nombre && nombre.value && !/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/.test(nombre.value)) {
+                mostrarError(nombre, 'El formato del campo nombre no es válido. Solo se permiten letras y espacios.');
+                valido = false;
+            }
+
+            // Validar contraseñas (solo si se están cambiando)
+            const password = formulario.querySelector('[name="password"]');
+            const confirmPassword = formulario.querySelector('[name="password_confirmation"]');
+            
+            if (password && password.value) {
+                if (!validarPassword(password, confirmPassword)) {
+                    valido = false;
+                }
+            }
+
+            // Si no es válido, prevenir envío y restaurar contraseñas
+            if (!valido) {
+                event.preventDefault();
+                
+                // Pequeño delay para asegurar que las contraseñas se restauren después del preventDefault
+                setTimeout(() => {
+                    restaurarContraseñasTemporalmente(formulario);
+                    
+                    // Hacer scroll al primer error
+                    const primerError = formulario.querySelector('.error');
+                    if (primerError) {
+                        primerError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                }, 100);
+            } else {
+                // Si es válido, limpiar el almacenamiento temporal
+                sessionStorage.removeItem('tempPassword');
+                sessionStorage.removeItem('tempConfirmPassword');
+            }
+
+            return valido;
+        }
+
+        // Inicialización cuando el DOM está listo
         const formularioUsuario = document.getElementById('form-crear-usuario') || document.getElementById('form-editar-usuario');
         
         if (formularioUsuario) {

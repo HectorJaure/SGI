@@ -171,8 +171,8 @@
                     <input type="password" id="password-eliminar" class="form-control"
                            placeholder="Ingrese su contraseña actual"
                            onkeypress="if(event.key === 'Enter') verificarPasswordParaEliminar()">
-                    <button type="button" class="toggle-password" onclick="togglePasswordModal('password-eliminar', this)">
-                        👁️
+                    <button type="button" class="password-toggle" id="togglePasswordEliminar">
+                        <i class="fas fa-eye"></i>
                     </button>
                 </div>
                 <div id="error-password-eliminar" class="form-help error" style="display: none;"></div>
@@ -540,7 +540,7 @@
         border-color: #bbdefb;
     }
 
-    /* Estilos para modales */
+    /* ESTILOS PARA MODALES - ACTUALIZADOS */
     .modal {
         display: none;
         position: fixed;
@@ -550,17 +550,19 @@
         width: 100%;
         height: 100%;
         background-color: rgba(0,0,0,0.5);
+        backdrop-filter: blur(5px);
     }
 
     .modal-content {
         background-color: white;
         margin: 10% auto;
         padding: 0;
-        border-radius: 10px;
+        border-radius: 12px;
         width: 500px;
         max-width: 90%;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+        box-shadow: 0 10px 40px rgba(0,0,0,0.3);
         animation: modalSlideIn 0.3s ease;
+        overflow: hidden;
     }
 
     @keyframes modalSlideIn {
@@ -580,6 +582,7 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
     }
 
     .modal-header h3 {
@@ -587,6 +590,9 @@
         font-size: 18px;
         font-weight: 600;
         margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
     }
 
     .close {
@@ -595,10 +601,17 @@
         font-weight: bold;
         cursor: pointer;
         transition: color 0.3s ease;
+        width: 30px;
+        height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
     }
 
     .close:hover {
         color: #e74c3c;
+        background-color: #fdeaea;
     }
 
     .modal-body {
@@ -614,34 +627,114 @@
         display: flex;
         justify-content: flex-end;
         gap: 10px;
+        background: #f8f9fa;
     }
 
     .alert-warning {
         background-color: #fff3cd;
         color: #856404;
-        border-color: #ffeaa7;
+        border: 1px solid #ffeaa7;
+        border-radius: 8px;
+        padding: 12px 15px;
+        margin-bottom: 15px;
     }
 
-    /* Estilos para el contenedor de contraseña */
+    /* ESTILOS MEJORADOS PARA CAMPOS DE CONTRASEÑA EN MODALES */
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: #2c3e50;
+        font-size: 14px;
+    }
+
+    .form-label .required {
+        color: #e74c3c;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 12px 16px;
+        border: 2px solid #e1e8ed;
+        border-radius: 8px;
+        font-size: 14px;
+        transition: all 0.3s ease;
+        background: #f8f9fa;
+        font-family: inherit;
+    }
+
+    .form-control:focus {
+        outline: none;
+        border-color: #3498db;
+        background: white;
+        box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+    }
+
+    .form-control.error {
+        border-color: #e74c3c;
+        background-color: #fed7d7;
+    }
+
+    .form-help {
+        font-size: 12px;
+        color: #7f8c8d;
+        margin-top: 5px;
+    }
+
+    .form-help.error {
+        color: #e74c3c;
+        font-weight: 500;
+    }
+
+    /* CONTENEDOR DE CONTRASEÑA MEJORADO */
     .password-container {
         position: relative;
         display: flex;
         align-items: center;
     }
 
-    .password-container input {
+    .password-container .form-control {
+        padding-right: 50px;
         width: 100%;
-        padding-right: 45px;
     }
 
-    .toggle-password {
+    .password-toggle {
         position: absolute;
-        right: 10px;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
         background: none;
         border: none;
+        color: #7f8c8d;
         cursor: pointer;
-        font-size: 16px;
-        padding: 5px;
+        padding: 6px;
+        border-radius: 4px;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        z-index: 2;
+    }
+
+    .password-toggle:hover {
+        background-color: #e1e8ed;
+        color: #3498db;
+    }
+
+    .password-toggle:focus {
+        outline: none;
+        box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.3);
+    }
+
+    .password-toggle.active {
+        color: #3498db;
+        background-color: #e3f2fd;
     }
 
     .datalist-input {
@@ -667,8 +760,6 @@
         background-image: none !important;
     }
 
-    
-
     /* Responsive */
     @media (max-width: 768px) {
         .table-controls {
@@ -681,8 +772,8 @@
         }
 
         .modal-content {
-            width: 90%;
-            margin: 20% auto;
+            width: 95%;
+            margin: 10% auto;
         }
 
         .modal-footer {
@@ -700,6 +791,29 @@
         .filter-actions .btn {
             width: 100%;
             justify-content: center;
+        }
+
+        .modal-header {
+            padding: 15px 20px;
+        }
+
+        .modal-body {
+            padding: 20px;
+        }
+
+        .modal-footer {
+            padding: 15px 20px;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .modal-content {
+            width: 98%;
+            margin: 5% auto;
+        }
+        
+        .modal-body {
+            padding: 15px;
         }
     }
 </style>
@@ -924,6 +1038,63 @@
             setTimeout(() => {
                 document.getElementById('password-eliminar').focus();
                 document.getElementById('password-eliminar').select();
+            }, 100);
+        }
+    }
+
+    // Función para mostrar/ocultar contraseña en modales
+    function togglePasswordModal(inputId, button) {
+        const input = document.getElementById(inputId);
+        const icon = button.querySelector('i');
+        
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.classList.remove('fa-eye');
+            icon.classList.add('fa-eye-slash');
+            button.classList.add('active');
+            button.setAttribute('aria-label', 'Ocultar contraseña');
+        } else {
+            input.type = 'password';
+            icon.classList.remove('fa-eye-slash');
+            icon.classList.add('fa-eye');
+            button.classList.remove('active');
+            button.setAttribute('aria-label', 'Mostrar contraseña');
+        }
+        
+        // Mantener el foco en el input
+        input.focus();
+    }
+
+    // Inicializar toggle de contraseña en el modal cuando se muestra
+    function mostrarModalVerificarEliminar(id, nombre) {
+        // Verificar si es el usuario actual
+        if (id === usuarioActualId) {
+            mostrarModalAutoEliminacion();
+        } else {
+            usuarioIdEliminar = id;
+            document.getElementById('textoVerificarEliminar').textContent = 
+                `Para eliminar al usuario "${nombre}", debe verificar su identidad ingresando su contraseña actual.`;
+            document.getElementById('modalVerificarEliminar').style.display = 'block';
+            document.getElementById('password-eliminar').value = '';
+            document.getElementById('error-password-eliminar').style.display = 'none';
+            
+            // Configurar el toggle de contraseña
+            const toggleBtn = document.getElementById('togglePasswordEliminar');
+            if (toggleBtn) {
+                toggleBtn.onclick = function() {
+                    togglePasswordModal('password-eliminar', this);
+                };
+                
+                // Resetear el estado del botón
+                const icon = toggleBtn.querySelector('i');
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+                toggleBtn.classList.remove('active');
+                toggleBtn.setAttribute('aria-label', 'Mostrar contraseña');
+            }
+            
+            setTimeout(() => {
+                document.getElementById('password-eliminar').focus();
             }, 100);
         }
     }

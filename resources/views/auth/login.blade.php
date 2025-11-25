@@ -39,7 +39,7 @@
             border-radius: 10px;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
             width: 100%;
-            max-width: 400px;
+            max-width: 600px;
             padding: 40px 30px;
         }
         
@@ -86,21 +86,64 @@
             top: 50%;
             transform: translateY(-50%);
             color: var(--gris-medio);
+            z-index: 2;
+        }
+        
+        .password-toggle {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--gris-medio);
+            cursor: pointer;
+            padding: 6px;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2;
+            width: 32px;
+            height: 32px;
+        }
+        
+        .password-toggle:hover {
+            background-color: var(--gris-claro);
+            color: var(--azul-claro);
+        }
+        
+        .password-toggle:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(66, 153, 225, 0.3);
+        }
+        
+        .password-toggle.active {
+            color: var(--azul-claro);
+            background-color: #e3f2fd;
         }
         
         input {
             width: 100%;
-            padding: 12px 15px 12px 45px;
+            padding: 12px 50px 12px 45px;
             border: 1px solid var(--gris-claro);
             border-radius: 6px;
             font-size: 1rem;
             transition: all 0.3s;
+            background-color: var(--blanco);
         }
         
         input:focus {
             outline: none;
             border-color: var(--azul-claro);
             box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.2);
+        }
+        
+        .password-strength {
+            margin-top: 5px;
+            font-size: 0.8rem;
+            display: none;
         }
         
         .btn {
@@ -178,6 +221,16 @@
             .login-container {
                 padding: 30px 20px;
             }
+            
+            input {
+                padding: 12px 45px 12px 40px;
+            }
+            
+            .password-toggle {
+                right: 10px;
+                width: 28px;
+                height: 28px;
+            }
         }
     </style>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -204,10 +257,14 @@
         <form class="login-form" method="POST" action="{{ route('login.submit') }}">
             @csrf
             <div class="form-group">
-                <label for="username">Usuario</label>
+                <label for="username">Usuario o correo electrónico</label>
                 <div class="input-with-icon">
                     <i class="fas fa-user input-icon"></i>
-                    <input type="text" id="username" name="username" placeholder="Ingrese su usuario" required>
+                    <input type="text" id="username" name="username" 
+                           placeholder="Ingrese su usuario" 
+                           value="{{ old('username') }}" 
+                           required
+                           autocomplete="username">
                 </div>
             </div>
             
@@ -215,8 +272,15 @@
                 <label for="password">Contraseña</label>
                 <div class="input-with-icon">
                     <i class="fas fa-lock input-icon"></i>
-                    <input type="password" id="password" name="password" placeholder="Ingrese su contraseña" required>
+                    <input type="password" id="password" name="password" 
+                           placeholder="Ingrese su contraseña" 
+                           required
+                           autocomplete="current-password">
+                    <button type="button" class="password-toggle" id="togglePassword" aria-label="Mostrar contraseña">
+                        <i class="fas fa-eye"></i>
+                    </button>
                 </div>
+                <div class="password-strength" id="passwordStrength"></div>
             </div>
 
             <!-- LINK PARA RECUPERAR CONTRASEÑA -->
@@ -235,5 +299,59 @@
             <p>Instituto Tecnológico Superior de Nochistlán<br></p>
         </div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const togglePassword = document.getElementById('togglePassword');
+            const passwordInput = document.getElementById('password');
+            const passwordIcon = togglePassword.querySelector('i');
+            
+            function togglePasswordVisibility() {
+                const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                passwordInput.setAttribute('type', type);
+                
+                if (type === 'text') {
+                    passwordIcon.classList.remove('fa-eye');
+                    passwordIcon.classList.add('fa-eye-slash');
+                    togglePassword.setAttribute('aria-label', 'Ocultar contraseña');
+                    togglePassword.classList.add('active');
+                } else {
+                    passwordIcon.classList.remove('fa-eye-slash');
+                    passwordIcon.classList.add('fa-eye');
+                    togglePassword.setAttribute('aria-label', 'Mostrar contraseña');
+                    togglePassword.classList.remove('active');
+                }
+                
+                // Mantener el foco en el input
+                passwordInput.focus();
+            }
+            
+            togglePassword.addEventListener('click', togglePasswordVisibility);
+            
+            // Mejorar accesibilidad
+            togglePassword.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    togglePasswordVisibility();
+                }
+            });
+            
+            // Opcional: Ocultar contraseña cuando se pierde el foco del campo
+            passwordInput.addEventListener('blur', function() {
+                if (passwordInput.getAttribute('type') === 'text') {
+                    // Esperar un poco antes de ocultar para no interrumpir el flujo
+                    setTimeout(() => {
+                        if (document.activeElement !== togglePassword) {
+                            passwordInput.setAttribute('type', 'password');
+                            passwordIcon.classList.remove('fa-eye-slash');
+                            passwordIcon.classList.add('fa-eye');
+                            togglePassword.setAttribute('aria-label', 'Mostrar contraseña');
+                            togglePassword.classList.remove('active');
+                        }
+                    }, 500);
+                }
+            });
+        });
+    </script>
 </body>
 </html>

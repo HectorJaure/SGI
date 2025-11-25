@@ -10,18 +10,26 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\VerificationActController;
 use Illuminate\Support\Facades\Route;
 
-// Rutas PÚBLICAS
-Route::get('/', [AuthController::class, 'showLogin'])->name('login');
-Route::post('/login', [AuthController::class, 'login'])->name('login.submit');
-Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+// Ruta PRINCIPAL - Página de inicio con las 3 normas
+Route::get('/', function () {
+    return view('index');
+})->name('home');
 
-// Recuperación de contraseña
-Route::get('/forgot-password', [PasswordController::class, 'showRequestForm'])->name('password.request');
-Route::post('/forgot-password', [PasswordController::class, 'sendResetLink'])->name('password.email');
-Route::get('/reset-password/{token}', [PasswordController::class, 'showResetForm'])->name('password.reset');
-Route::post('/reset-password', [PasswordController::class, 'reset'])->name('password.update');
+// Rutas de autenticación (públicas)
+Route::middleware(['web'])->group(function () {
+    // Login
+    Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
+    Route::post('/login', [AuthController::class, 'login'])->name('login.submit');
+    Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
-// Rutas PROTEGIDAS
+    // Recuperación de contraseña
+    Route::get('/forgot-password', [PasswordController::class, 'showRequestForm'])->name('password.request');
+    Route::post('/forgot-password', [PasswordController::class, 'sendResetLink'])->name('password.email');
+    Route::get('/reset-password/{token}', [PasswordController::class, 'showResetForm'])->name('password.reset');
+    Route::post('/reset-password', [PasswordController::class, 'reset'])->name('password.update');
+});
+
+// Rutas PROTEGIDAS - Requieren autenticación
 Route::middleware([\App\Http\Middleware\AuthenticateSession::class])->group(function () {
     
     // Dashboard (accesible para todos los usuarios autenticados)
@@ -36,7 +44,6 @@ Route::middleware([\App\Http\Middleware\AuthenticateSession::class])->group(func
     Route::delete('/risks/{id}', [RiskMatrixController::class, 'destroy'])->name('risks.destroy');
     Route::get('/export/verification-act', [VerificationActController::class, 'exportVerificationAct'])->name('export.verification-act');
 
-
     // Requisitos Legales (accesibles para todos los usuarios autenticados)
     Route::get('/requisitos-legales', [RequisitoLegalController::class, 'index'])->name('requisitos-legales.index');
     Route::get('/requisitos-legales/crear', [RequisitoLegalController::class, 'create'])->name('requisitos-legales.create');
@@ -46,7 +53,9 @@ Route::middleware([\App\Http\Middleware\AuthenticateSession::class])->group(func
     Route::delete('/requisitos-legales/{id}', [RequisitoLegalController::class, 'destroy'])->name('requisitos-legales.destroy');
 
     // Ruta independiente para el instructivo
-    Route::get('/instructivo', function () {return view('instructivo');})->name('instructivo');
+    Route::get('/instructivo', function () {
+        return view('instructivo');
+    })->name('instructivo');
 
     // Grupo de rutas SOLO PARA ADMINISTRADORES
     Route::middleware([\App\Http\Middleware\AdminMiddleware::class])->group(function () {

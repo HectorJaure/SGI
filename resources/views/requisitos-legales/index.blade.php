@@ -164,7 +164,7 @@
                 <tr>
                     <th class="category-header" style="width: 120px;">Estado</th>
                     <th class="category-header" style="width: 350px;">Evidencia</th>
-                    <th class="category-header" style="width: 350px;">Acciones No</th>
+                    <th class="category-header" style="width: 350px;">Acciones</th>
                 </tr>
             </thead>
             <tbody>
