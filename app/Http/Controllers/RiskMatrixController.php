@@ -12,11 +12,6 @@ class RiskMatrixController extends Controller
 {
     public function matrix(Request $request)
     {
-        // Verificar permisos
-        if (session('user_rol') !== 'Administrador') {
-            return redirect()->route('dashboard')->with('error', 'No tienes permisos para acceder a esta sección.');
-        }
-
         $perPage = $request->get('per_page', 10);
         
         // Iniciar consulta

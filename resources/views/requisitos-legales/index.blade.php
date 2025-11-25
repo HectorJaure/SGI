@@ -47,10 +47,6 @@
             <div class="risk-value">{{ $noCumplidos }}</div>
             <div class="risk-label">Requisitos Pendientes</div>
         </div>
-        <div class="risk-indicator risk-muy-alto">
-            <div class="risk-value">{{ $sinEvaluar }}</div>
-            <div class="risk-label">Sin Evaluar</div>
-        </div>
     </div>
 
     <!-- Filtros -->
@@ -81,7 +77,7 @@
                         <option value="">Todos los estados</option>
                         <option value="si" {{ request('cumplimiento') == 'si' ? 'selected' : '' }}>Cumplido</option>
                         <option value="no" {{ request('cumplimiento') == 'no' ? 'selected' : '' }}>No Cumplido</option>
-                        <option value="null" {{ request('cumplimiento') == 'null' ? 'selected' : '' }}>Sin Evaluar</option>
+                        <option value="null" {{ request('cumplimiento') == 'null' ? 'selected' : '' }}>Sin incidentes</option>
                     </select>
                 </div>
                 <div class="filter-group">
@@ -206,7 +202,7 @@
                             <td class="evaluation-cell">{{ $requisito->acciones_no ?: '' }}</td>
                         @else
                             <td class="evaluation-cell">
-                                <span class="significancia" style="background-color: #e2e8f0; color: #4a5568;">SIN EVALUAR</span>
+                                <span class="significancia"></span>
                             </td>
                             <td class="evaluation-cell"></td>
                             <td class="evaluation-cell"></td>

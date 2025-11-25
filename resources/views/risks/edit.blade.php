@@ -66,7 +66,7 @@
                             @enderror
                         </div>
                     </div>
-                </div> <!-- Cierre correcto del row -->
+                </div>
 
                 <div class="mb-3">
                     <label for="peligro" class="form-label">Descripción del Peligro *</label>
@@ -93,7 +93,7 @@
                     <div class="col-md-6">
                         <div class="form-group">
                             <label for="clasificacion" class="form-label">Clasificación *</label>
-                            <select name="clasificacion" id="clasificacion" class="form-select" required>
+                            <select name="clasificacion" id="clasificacion" class="form-select" required onchange="actualizarOpcionesConsecuencia()">
                                 <option value="Seguridad" {{ old('clasificacion', $riesgo->clasificacion) == 'Seguridad' ? 'selected' : '' }}>Seguridad</option>
                                 <option value="Salud" {{ old('clasificacion', $riesgo->clasificacion) == 'Salud' ? 'selected' : '' }}>Salud</option>
                             </select>
@@ -163,9 +163,9 @@
                                 <div class="form-group">
                                     <label for="probabilidad_ocurrencia" class="form-label">Probabilidad de Ocurrencia *</label>
                                     <select name="probabilidad_ocurrencia" id="probabilidad_ocurrencia" class="form-select" required>
-                                        <option value="1.0" {{ old('probabilidad_ocurrencia') == '1.0' ? 'selected' : '' }}>Baja(No se han presentado incidentes)</option>
-                                        <option value="3.0" {{ old('probabilidad_ocurrencia') == '3.0' ? 'selected' : '' }}>Mediana(Se ha presentado por lo menos 1 incidente)</option>
-                                        <option value="5.0" {{ old('probabilidad_ocurrencia') == '5.0' ? 'selected' : '' }}>Alta(Se han presentado mas de 1 incidente)</option>
+                                        <option value="1.0" {{ old('probabilidad_ocurrencia', $riesgo->probabilidad_ocurrencia) == 1.0 ? 'selected' : '' }}>Baja (No se han presentado incidentes)</option>
+                                        <option value="3.0" {{ old('probabilidad_ocurrencia', $riesgo->probabilidad_ocurrencia) == 3.0 ? 'selected' : '' }}>Mediana (Se ha presentado por lo menos 1 incidente)</option>
+                                        <option value="5.0" {{ old('probabilidad_ocurrencia', $riesgo->probabilidad_ocurrencia) == 5.0 ? 'selected' : '' }}>Alta (Se han presentado mas de 1 incidente)</option>
                                     </select>
                                     @error('probabilidad_ocurrencia')
                                         <div class="text-danger">{{ $message }}</div>
@@ -179,9 +179,17 @@
                                 <div class="form-group">
                                     <label for="consecuencia_personas" class="form-label">Consecuencia a Personas *</label>
                                     <select name="consecuencia_personas" id="consecuencia_personas" class="form-select" required>
-                                        <option value="1.0" {{ old('consecuencia_personas') == '1.0' ? 'selected' : '' }}>Baja(Cortaduras leves, hematomas, torceduras, quemaduras 1° grado < 10% del cuerpo)</option>
-                                        <option value="3.0" {{ old('consecuencia_personas') == '3.0' ? 'selected' : '' }}>Mediana(Fracturas, esguinces, quemaduras 1°-2° grado ≤ 50% del cuerpo, infecciones respiratorias)</option>
-                                        <option value="5.0" {{ old('consecuencia_personas') == '5.0' ? 'selected' : '' }}>Alta(Quemaduras graves > 50% del cuerpo, intoxicación, discapacidad permanente, enfermedades ocupacionales, muerte)</option>
+                                        @if($riesgo->clasificacion == 'Seguridad')
+                                            <!-- Opciones para Seguridad -->
+                                            <option value="1.0" {{ old('consecuencia_personas', $riesgo->consecuencia_personas) == 1.0 ? 'selected' : '' }}>Baja - Cortaduras leves, hematomas, torceduras, quemaduras 1° grado</option>
+                                            <option value="3.0" {{ old('consecuencia_personas', $riesgo->consecuencia_personas) == 3.0 ? 'selected' : '' }}>Mediana - Fracturas, esguinces, quemaduras 1°-2° grado, infecciones</option>
+                                            <option value="5.0" {{ old('consecuencia_personas', $riesgo->consecuencia_personas) == 5.0 ? 'selected' : '' }}>Alta - Quemaduras graves, intoxicación, discapacidad permanente, muerte</option>
+                                        @else
+                                            <!-- Opciones para Salud -->
+                                            <option value="1.0" {{ old('consecuencia_personas', $riesgo->consecuencia_personas) == 1.0 ? 'selected' : '' }}>Baja - Atención primaria, tratamiento no médico, enfermedades agudas</option>
+                                            <option value="3.0" {{ old('consecuencia_personas', $riesgo->consecuencia_personas) == 3.0 ? 'selected' : '' }}>Mediana - Enfermedades crónicas, degenerativas, por sistemas y aparatos</option>
+                                            <option value="5.0" {{ old('consecuencia_personas', $riesgo->consecuencia_personas) == 5.0 ? 'selected' : '' }}>Alta - Hospitalización, incapacidad permanente, muerte</option>
+                                        @endif
                                     </select>
                                     @error('consecuencia_personas')
                                         <div class="text-danger">{{ $message }}</div>
@@ -192,10 +200,10 @@
                                 <div class="form-group">
                                     <label for="consecuencia_infraestructura" class="form-label">Consecuencia a Infraestructura *</label>
                                     <select name="consecuencia_infraestructura" id="consecuencia_infraestructura" class="form-select" required>
-                                        <option value="0.0" {{ old('consecuencia_infraestructura') == '0.0' ? 'selected' : '' }}>Extremadamente Baja(Sin costo)</option>
-                                        <option value="1.0" {{ old('consecuencia_infraestructura') == '1.0' ? 'selected' : '' }}>Baja(Costo entre $1 a $5,000)</option>
-                                        <option value="2.0" {{ old('consecuencia_infraestructura') == '2.0' ? 'selected' : '' }}>Mediana(Costo entre $5,001 a $50,000)</option>
-                                        <option value="3.0" {{ old('consecuencia_infraestructura') == '3.0' ? 'selected' : '' }}>Alta(Costo mayor $50,000)</option>
+                                        <option value="0.0" {{ old('consecuencia_infraestructura', $riesgo->consecuencia_infraestructura) == 0.0 ? 'selected' : '' }}>Extremadamente Baja (Sin costo)</option>
+                                        <option value="1.0" {{ old('consecuencia_infraestructura', $riesgo->consecuencia_infraestructura) == 1.0 ? 'selected' : '' }}>Baja (Costo entre $1 a $5,000)</option>
+                                        <option value="2.0" {{ old('consecuencia_infraestructura', $riesgo->consecuencia_infraestructura) == 2.0 ? 'selected' : '' }}>Mediana (Costo entre $5,001 a $50,000)</option>
+                                        <option value="3.0" {{ old('consecuencia_infraestructura', $riesgo->consecuencia_infraestructura) == 3.0 ? 'selected' : '' }}>Alta (Costo mayor $50,000)</option>
                                     </select>
                                     @error('consecuencia_infraestructura')
                                         <div class="text-danger">{{ $message }}</div>
@@ -309,6 +317,54 @@
         return significancia;
     }
 
+    // Función para actualizar las opciones de consecuencia según la clasificación
+    function actualizarOpcionesConsecuencia() {
+        const clasificacion = document.getElementById('clasificacion').value;
+        const selectConsecuencia = document.getElementById('consecuencia_personas');
+        
+        // Obtener el nivel actual basado en la selección ACTUAL del usuario (no el valor guardado)
+        const valorActual = selectConsecuencia.value;
+        let nivelActual = 'baja'; // Por defecto
+        
+        if (valorActual === '3.0') {
+            nivelActual = 'mediana';
+        } else if (valorActual === '5.0') {
+            nivelActual = 'alta';
+        }
+        
+        // Limpiar las opciones actuales
+        selectConsecuencia.innerHTML = '';
+        
+        // Agregar las nuevas opciones según la clasificación
+        if (clasificacion === 'Seguridad') {
+            // Opciones para Seguridad
+            selectConsecuencia.innerHTML = `
+                <option value="1.0">Baja - Cortaduras leves, hematomas, torceduras, quemaduras 1° grado</option>
+                <option value="3.0">Mediana - Fracturas, esguinces, quemaduras 1°-2° grado, infecciones</option>
+                <option value="5.0">Alta - Quemaduras graves, intoxicación, discapacidad permanente, muerte</option>
+            `;
+        } else {
+            // Opciones para Salud (siempre habrá Seguridad o Salud)
+            selectConsecuencia.innerHTML = `
+                <option value="1.0">Baja - Atención primaria, tratamiento no médico, enfermedades agudas</option>
+                <option value="3.0">Mediana - Enfermedades crónicas, degenerativas, por sistemas y aparatos</option>
+                <option value="5.0">Alta - Hospitalización, incapacidad permanente, muerte</option>
+            `;
+        }
+        
+        // Mantener el mismo nivel (baja, mediana, alta) que tenía seleccionado actualmente
+        if (nivelActual === 'mediana') {
+            selectConsecuencia.value = "3.0";
+        } else if (nivelActual === 'alta') {
+            selectConsecuencia.value = "5.0";
+        } else {
+            selectConsecuencia.value = "1.0";
+        }
+        
+        // Recalcular significancia
+        calcularSignificancia();
+    }
+
     // Validaciones del formulario de riesgos
     function validarFormularioRiesgo() {
         const formulario = document.querySelector('form');
@@ -379,6 +435,9 @@
 
     // Calcular significancia cuando cambien los valores
     document.addEventListener('DOMContentLoaded', function() {
+        // Inicializar las opciones de consecuencia
+        actualizarOpcionesConsecuencia();
+        
         // Calcular significancia inicial
         calcularSignificancia();
         
@@ -386,6 +445,9 @@
         document.querySelectorAll('#tiempo_exposicion, #personas_expuestas, #probabilidad_ocurrencia, #consecuencia_personas, #consecuencia_infraestructura').forEach(element => {
             element.addEventListener('change', calcularSignificancia);
         });
+
+        // Agregar event listener para el cambio de clasificación
+        document.getElementById('clasificacion').addEventListener('change', actualizarOpcionesConsecuencia);
 
         // Agregar validación en tiempo real
         const campos = document.querySelectorAll('input, select, textarea');
