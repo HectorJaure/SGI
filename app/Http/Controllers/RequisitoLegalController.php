@@ -5,13 +5,14 @@ namespace App\Http\Controllers;
 use App\Models\RequisitoLegal;
 use Illuminate\Http\Request;
 use App\Http\Controllers\NotificationController;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Imports\RequisitosImport;
 
 class RequisitoLegalController extends Controller
 {
     public function index(Request $request)
     {
-
-    $query = RequisitoLegal::query()->orderBy('categoria_norma')->orderBy('norma');
+        $query = RequisitoLegal::query()->orderBy('categoria_norma')->orderBy('norma');
         
         // Búsqueda general
         if ($request->has('search') && $request->search != '') {
@@ -24,7 +25,11 @@ class RequisitoLegalController extends Controller
         
         // Filtro por cumplimiento
         if ($request->has('cumplimiento') && $request->cumplimiento != '') {
-            $query->where('cumplimiento', $request->cumplimiento);
+            if ($request->cumplimiento == 'null') {
+                $query->whereNull('cumplimiento');
+            } else {
+                $query->where('cumplimiento', $request->cumplimiento);
+            }
         }
         
         // Filtro por norma
@@ -57,16 +62,6 @@ class RequisitoLegalController extends Controller
             $query->where('responsables', 'like', '%'.$request->responsable.'%');
         }
         
-        // Determinar si mostrar todos o paginar
-        $perPage = $request->get('per_page', 10);
-        
-        if ($perPage === 'all') {
-            $requisitos = $query->get();
-        } else {
-            $requisitos = $query->paginate($perPage);
-            $requisitos->appends($request->except('page'));
-        }
-        
         // OBTENER LAS NORMAS PARA EL FILTRO
         $normas = RequisitoLegal::distinct('norma')->pluck('norma')->filter();
         
@@ -80,10 +75,36 @@ class RequisitoLegalController extends Controller
             'organizacion' => 'Normas de Organización'
         ];
         
-        // AGRUPAR REQUISITOS POR CATEGORÍA
-        $requisitosAgrupados = $this->agruparPorCategoriaNorma($requisitos);
+        // CALCULAR INDICADORES CON TODOS LOS DATOS FILTRADOS (sin paginación)
+        $totalRequisitos = $query->count();
+        $cumplidos = (clone $query)->where('cumplimiento', 'si')->count();
+        $noCumplidos = (clone $query)->where('cumplimiento', 'no')->count();
+        $sinEvaluar = (clone $query)->whereNull('cumplimiento')->count();
         
-        return view('requisitos-legales.index', compact('requisitos', 'normas', 'tiposRequisito', 'requisitosAgrupados', 'categoriasNorma'));
+        // AGRUPAR REQUISITOS POR CATEGORÍA (sin paginación)
+        $requisitosAgrupados = $this->agruparPorCategoriaNorma($query->get());
+        
+        // Determinar si mostrar todos o paginar (solo para la tabla)
+        $perPage = $request->get('per_page', 10);
+        
+        if ($perPage === 'all') {
+            $requisitos = $query->get();
+        } else {
+            $requisitos = $query->paginate($perPage);
+            $requisitos->appends($request->except('page'));
+        }
+        
+        return view('requisitos-legales.index', compact(
+            'requisitos', 
+            'normas', 
+            'tiposRequisito', 
+            'requisitosAgrupados', 
+            'categoriasNorma',
+            'totalRequisitos',
+            'cumplidos',
+            'noCumplidos',
+            'sinEvaluar'
+        ));
     }
     
     private function agruparPorCategoriaNorma($requisitos)
@@ -218,5 +239,16 @@ class RequisitoLegalController extends Controller
 
         return redirect()->route('requisitos-legales.index')
                          ->with('success', 'Requisito eliminado correctamente.');
+    }
+
+    public function importarExcel(Request $request)
+    {
+        $request->validate([
+            'archivo' => 'required|mimes:xlsx,xls'
+        ]);
+
+        Excel::import(new RequisitosImport, $request->file('archivo'));
+
+        return back()->with('success', 'Importación completada correctamente');
     }
 }

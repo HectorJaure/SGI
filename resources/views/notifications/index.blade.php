@@ -8,7 +8,6 @@
 <div class="container-fluid">
     <h1 class="page-title">Sistema de Gestión de Notificaciones</h1>
     
-    <!-- Mensajes -->
     @if(session('success'))
         <div class="alert alert-success">
             <i class="fas fa-check-circle"></i> {{ session('success') }}
@@ -21,7 +20,6 @@
         </div>
     @endif
 
-    <!-- Indicadores de notificaciones -->
     <div class="risk-indicators">
         <div class="risk-indicator risk-medio">
             <div class="risk-value">{{ $notifications->total() }}</div>
@@ -33,7 +31,6 @@
         </div>
     </div>
 
-    <!-- Filtros -->
     <div class="filters">
         <form method="GET" action="{{ route('notifications.index') }}" id="filter-form">
             <div class="filter-row">
@@ -82,7 +79,6 @@
         </form>
     </div>
 
-    <!-- Contenedor Principal de Notificaciones -->
     <div class="matrix-container">
         <div class="matrix-header">
             <h3 class="section-title">Lista de Notificaciones del Sistema</h3>
@@ -137,7 +133,6 @@
                             {{ $notification->created_at_corregido->format('d/m/Y H:i') }}
                             ({{ $notification->created_at_humans_corregido }})
                         </span>
-                        <!-- Mostrar quién realizó la acción -->
                         @if($notification->usuario_accion && $notification->usuario_accion != 'Sistema')
                         <span class="notification-user">
                             <i class="fas fa-user me-1"></i>
@@ -200,7 +195,6 @@
     </div>
 </div>
 
-<!-- Modal para Eliminar Notificación Individual -->
 <div id="deleteModal" class="modal">
     <div class="modal-content">
         <div class="modal-header">
@@ -226,7 +220,6 @@
     </div>
 </div>
 
-<!-- Modal para Marcar Todas como Leídas -->
 <div id="markAllAsReadModal" class="modal">
     <div class="modal-content">
         <div class="modal-header">
@@ -283,7 +276,6 @@
 </div>
 
 <style>
-/* Variables CSS */
 :root {
     --azul-marino: #1e3a5f;
     --azul-medio: #2c5282;
@@ -300,7 +292,6 @@
     --sombra-hover: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
 }
 
-/* Estilos generales */
 .page-title {
     font-size: 1.8rem;
     font-weight: 700;
@@ -309,7 +300,6 @@
     text-align: center;
 }
 
-/* Botones */
 .btn {
     background-color: var(--azul-claro);
     color: white;
@@ -340,7 +330,6 @@
 .btn-secondary { background-color: var(--gris-medio); }
 .btn-secondary:hover { background-color: var(--gris-oscuro); }
 
-/* Botones de acción (íconos) */
 .btn-icon {
     width: 32px;
     height: 32px;
@@ -384,7 +373,6 @@
     color: white;
 }
 
-/* Indicadores de riesgo */
 .risk-indicators {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -423,7 +411,6 @@
     font-weight: 500;
 }
 
-/* Filtros */
 .filters {
     background-color: var(--blanco);
     border-radius: 12px;
@@ -473,7 +460,6 @@ input:focus, select:focus {
     box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
 }
 
-/* Contenedor de matriz */
 .matrix-container {
     background-color: var(--blanco);
     border-radius: 12px;
@@ -499,7 +485,6 @@ input:focus, select:focus {
     margin: 0;
 }
 
-/* Lista de Notificaciones */
 .notifications-list {
     min-height: 400px;
 }
@@ -627,7 +612,6 @@ input:focus, select:focus {
     align-items: center;
 }
 
-/* Estados vacíos */
 .empty-state {
     text-align: center;
     padding: 60px 20px;
@@ -640,7 +624,6 @@ input:focus, select:focus {
     font-weight: 600;
 }
 
-/* Nuevos estilos para el usuario que realizó la acción */
 .notification-user {
     font-size: 0.75rem;
     color: var(--gris-medio);
@@ -649,7 +632,6 @@ input:focus, select:focus {
     gap: 5px;
 }
 
-/* Alertas */
 .alert {
     padding: 15px 20px;
     border-radius: 8px;
@@ -686,7 +668,6 @@ input:focus, select:focus {
     border-color: #81e6d9;
 }
 
-/* Footer de la tarjeta */
 .card-footer {
     display: flex;
     justify-content: space-between;
@@ -696,7 +677,6 @@ input:focus, select:focus {
     background: #f8f9fa;
 }
 
-/* Estilos para modales */
 .modal {
     display: none;
     position: fixed;
@@ -780,7 +760,6 @@ input:focus, select:focus {
     gap: 10px;
 }
 
-/* Responsive */
 @media (max-width: 768px) {
     .filter-row {
         grid-template-columns: 1fr;
@@ -848,10 +827,8 @@ input:focus, select:focus {
 </style>
 
 <script>
-// Variables globales
 let currentNotificationId = null;
 
-// Funciones para mostrar/ocultar modales
 function showDeleteModal(id, titulo) {
     currentNotificationId = id;
     document.getElementById('notificationToDeleteText').textContent = `"${titulo}"`;
@@ -879,7 +856,6 @@ function closeClearAllModal() {
     document.getElementById('clearAllModal').style.display = 'none';
 }
 
-// Cerrar modales al hacer clic fuera
 window.addEventListener('click', function(event) {
     const modals = ['deleteModal', 'markAllAsReadModal', 'clearAllModal'];
     modals.forEach(modalId => {
@@ -893,7 +869,6 @@ window.addEventListener('click', function(event) {
     });
 });
 
-// Funciones JavaScript para acciones
 function markAsRead(notificationId) {
     fetch(`/notificaciones/${notificationId}/marcar-leida`, {
         method: 'POST',
@@ -932,21 +907,17 @@ function markAsUnread(notificationId) {
     });
 }
 
-// Configurar event listeners para los botones de confirmación
 document.addEventListener('DOMContentLoaded', function() {
-    // Eliminar notificación individual
     document.getElementById('confirmDeleteBtn').addEventListener('click', function() {
         if (currentNotificationId) {
             deleteNotification(currentNotificationId);
         }
     });
 
-    // Marcar todas como leídas
     document.getElementById('confirmMarkAllAsReadBtn').addEventListener('click', function() {
         markAllAsRead();
     });
 
-    // Limpiar todas las notificaciones
     document.getElementById('confirmClearAllBtn').addEventListener('click', function() {
         clearAllNotifications();
     });
@@ -1021,7 +992,6 @@ function clearAllNotifications() {
     });
 }
 
-// Función de filtros
 function applyFilters() {
     const typeFilter = document.getElementById('filter-type').value;
     const statusFilter = document.getElementById('filter-status').value;
@@ -1045,7 +1015,6 @@ function applyFilters() {
         if (shouldShow) visibleCount++;
     });
 
-    // Mostrar mensaje si no hay resultados
     const emptyState = document.querySelector('.empty-state');
     if (emptyState) {
         if (visibleCount === 0 && document.querySelectorAll('.notification-item').length > 0) {

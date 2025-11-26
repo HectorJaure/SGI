@@ -60,10 +60,6 @@
             font-size: 0.9rem;
         }
         
-        .login-form {
-            width: 100%;
-        }
-        
         .form-group {
             margin-bottom: 20px;
         }
@@ -114,16 +110,6 @@
             color: var(--azul-claro);
         }
         
-        .password-toggle:focus {
-            outline: none;
-            box-shadow: 0 0 0 2px rgba(66, 153, 225, 0.3);
-        }
-        
-        .password-toggle.active {
-            color: var(--azul-claro);
-            background-color: #e3f2fd;
-        }
-        
         input {
             width: 100%;
             padding: 12px 50px 12px 45px;
@@ -138,12 +124,6 @@
             outline: none;
             border-color: var(--azul-claro);
             box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.2);
-        }
-        
-        .password-strength {
-            margin-top: 5px;
-            font-size: 0.8rem;
-            display: none;
         }
         
         .btn {
@@ -216,7 +196,6 @@
             font-size: 0.8rem;
         }
         
-        /* Responsive */
         @media (max-width: 480px) {
             .login-container {
                 padding: 30px 20px;
@@ -280,10 +259,8 @@
                         <i class="fas fa-eye"></i>
                     </button>
                 </div>
-                <div class="password-strength" id="passwordStrength"></div>
             </div>
 
-            <!-- LINK PARA RECUPERAR CONTRASEÑA -->
             <div class="forgot-password">
                 <a href="{{ route('password.request') }}">
                     <i class="fas fa-key"></i> ¿Olvidaste tu contraseña?
@@ -296,7 +273,7 @@
         </form>
         
         <div class="footer">
-            <p>Instituto Tecnológico Superior de Nochistlán<br></p>
+            <p>Instituto Tecnológico Superior de Nochistlán</p>
         </div>
     </div>
 
@@ -314,41 +291,21 @@
                     passwordIcon.classList.remove('fa-eye');
                     passwordIcon.classList.add('fa-eye-slash');
                     togglePassword.setAttribute('aria-label', 'Ocultar contraseña');
-                    togglePassword.classList.add('active');
                 } else {
                     passwordIcon.classList.remove('fa-eye-slash');
                     passwordIcon.classList.add('fa-eye');
                     togglePassword.setAttribute('aria-label', 'Mostrar contraseña');
-                    togglePassword.classList.remove('active');
                 }
                 
-                // Mantener el foco en el input
                 passwordInput.focus();
             }
             
             togglePassword.addEventListener('click', togglePasswordVisibility);
             
-            // Mejorar accesibilidad
             togglePassword.addEventListener('keydown', function(e) {
                 if (e.key === 'Enter' || e.key === ' ') {
                     e.preventDefault();
                     togglePasswordVisibility();
-                }
-            });
-            
-            // Opcional: Ocultar contraseña cuando se pierde el foco del campo
-            passwordInput.addEventListener('blur', function() {
-                if (passwordInput.getAttribute('type') === 'text') {
-                    // Esperar un poco antes de ocultar para no interrumpir el flujo
-                    setTimeout(() => {
-                        if (document.activeElement !== togglePassword) {
-                            passwordInput.setAttribute('type', 'password');
-                            passwordIcon.classList.remove('fa-eye-slash');
-                            passwordIcon.classList.add('fa-eye');
-                            togglePassword.setAttribute('aria-label', 'Mostrar contraseña');
-                            togglePassword.classList.remove('active');
-                        }
-                    }, 500);
                 }
             });
         });

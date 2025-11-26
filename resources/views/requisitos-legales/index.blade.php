@@ -29,15 +29,15 @@
     <!-- Indicadores de cumplimiento -->
     <div class="risk-indicators">
         @php
-            $total = $requisitos->count();
-            $cumplidos = $requisitos->where('cumplimiento', 'si')->count();
-            $noCumplidos = $requisitos->where('cumplimiento', 'no')->count();
-            $sinEvaluar = $requisitos->whereNull('cumplimiento')->count();
-            $porcentajeCumplido = $total > 0 ? round(($cumplidos / $total) * 100) : 0;
+            $porcentajeCumplido = $totalRequisitos > 0 ? round(($cumplidos / $totalRequisitos) * 100) : 0;
         @endphp
         <div class="risk-indicator risk-bajo">
-            <div class="risk-value">{{ $total }}</div>
+            <div class="risk-value">{{ $totalRequisitos }}</div>
             <div class="risk-label">Total Requisitos</div>
+        </div>
+        <div class="risk-indicator risk-sin">
+            <div class="risk-value">{{ $sinEvaluar }}</div>
+            <div class="risk-label">Sin incidentes</div>
         </div>
         <div class="risk-indicator risk-medio">
             <div class="risk-value">{{ $cumplidos }}</div>
@@ -117,6 +117,9 @@
                 <a href="{{ route('requisitos-legales.create') }}" class="btn btn-success flex-grow-1 d-flex justify-content-center align-items-center">
                     <i class="fas fa-plus"></i> Nuevo Requisito
                 </a>
+                <button type="button" class="btn btn-success flex-grow-1 d-flex justify-content-center align-items-center" data-bs-toggle="modal" data-bs-target="#importModal">
+                    <i class="fas fa-file-excel"></i> Importar Excel
+                </button>
             </div>
         </form>
     </div>
@@ -252,6 +255,49 @@
         Mostrando {{ $requisitos->count() }} de {{ $requisitos->total() }} requisitos legales
     </div>
 </div>
+
+<!-- Modal Importar Excel -->
+<div class="modal fade" id="importModal" tabindex="-1" aria-labelledby="importModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            
+            <div class="modal-header">
+                <h5 class="modal-title" id="importModalLabel">Importar Requisitos Legales desde Excel</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+
+            <form action="{{ route('requisitos-legales.importar') }}" method="POST" enctype="multipart/form-data">
+                @csrf
+
+                <div class="modal-body">
+                    <p>Selecciona un archivo Excel (.xlsx o .xls) con el formato correcto.</p>
+
+                    <div class="mb-3">
+                        <label for="archivo" class="form-label">Archivo Excel</label>
+                        <input type="file" name="archivo" id="archivo" class="form-control" accept=".xlsx,.xls" required>
+                    </div>
+
+                    @if ($errors->any())
+                        <div class="alert alert-danger mt-2">
+                            <ul class="mb-0">
+                                @foreach ($errors->all() as $e)
+                                    <li>{{ $e }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @endif
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-success">Importar</button>
+                </div>
+            </form>
+
+        </div>
+    </div>
+</div>
+
 
 <!-- Modal para Eliminar Requisito Legal -->
 <div id="modalEliminar" class="modal">
@@ -501,7 +547,7 @@
     .risk-bajo { border-left-color: var(--verde); }
     .risk-medio { border-left-color: var(--amarillo); }
     .risk-alto { border-left-color: var(--naranja); }
-    .risk-muy-alto { border-left-color: var(--rojo); }
+    .risk-sin { border-left-color: var(--gris-medio); }
 
     .risk-value {
         font-size: 2.2rem;
@@ -702,6 +748,27 @@
         gap: 10px;
     }
 
+    .modal-backdrop {
+        display: none !important;
+    }
+
+    #modalEliminar {
+        display: none;
+        position: fixed;
+        z-index: 9999;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0,0,0,0.5);
+    }
+
+    #modalEliminar .modal-content {
+        position: relative;
+        z-index: 10000;
+        pointer-events: auto;
+    }
+
     .alert-warning {
         background-color: #fff3cd;
         color: #856404;
@@ -758,16 +825,20 @@
 
 @section('scripts')
 <script>
-    // Funciones para eliminar requisito legal
     function mostrarModalEliminarRequisito(id, textoRequisito) {
-        document.getElementById('textoRequisitoEliminar').textContent = textoRequisito;
-        document.getElementById('formEliminarRequisito').action = `/requisitos-legales/${id}`;
-        document.getElementById('modalEliminar').style.display = 'block';
-    }
+    document.querySelectorAll('.modal-backdrop').forEach(backdrop => {
+        backdrop.remove();
+    });
+    
+    document.getElementById('textoRequisitoEliminar').textContent = textoRequisito;
+    document.getElementById('formEliminarRequisito').action = `/requisitos-legales/${id}`;
+    document.getElementById('modalEliminar').style.display = 'block';
+}
 
     function cerrarModalEliminar() {
         document.getElementById('modalEliminar').style.display = 'none';
         document.getElementById('formEliminarRequisito').action = '';
+        document.querySelector('.modal-backdrop')?.remove();
     }
 
     // Cerrar modal al hacer clic fuera
@@ -784,5 +855,29 @@
         url.searchParams.set('per_page', value);
         window.location.href = url.toString();
     }
+
+    // Prevenir que Bootstrap cierre el modal automáticamente
+document.addEventListener('DOMContentLoaded', function() {
+    const modalEliminar = document.getElementById('modalEliminar');
+    
+    if (modalEliminar) {
+        // Prevenir cierre al hacer clic fuera
+        const modalInstance = new bootstrap.Modal(modalEliminar);
+        modalEliminar.addEventListener('click', function(e) {
+            if (e.target === modalEliminar) {
+                e.stopPropagation();
+                e.preventDefault();
+            }
+        });
+
+        // Prevenir cierre con tecla ESC
+        modalEliminar.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                e.stopPropagation();
+                e.preventDefault();
+            }
+        });
+    }
+});
 </script>
 @endsection

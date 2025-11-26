@@ -12,8 +12,8 @@ class RequisitoLegal extends Model
     protected $table = 'legal_requirements';
 
     protected $fillable = [
-        'norma',
         'categoria_norma',
+        'norma',
         'titulo', 
         'tipo_requisito',
         'numero_requisito',
