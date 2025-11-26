@@ -10,6 +10,7 @@ use Illuminate\Support\Str;
 use App\Models\User;
 use App\Mail\PasswordResetMail;
 use Carbon\Carbon;
+use Illuminate\Validation\Rules\Password;
 
 class PasswordController extends Controller
 {
@@ -40,11 +41,10 @@ class PasswordController extends Controller
 
         $resetUrl = route('password.reset', ['token' => $token]);
 
-        // ✅ ENVÍO CON LOG - SIN ERRORES
         try {
             Mail::to($user->email)->send(new PasswordResetMail($user, $resetUrl));
             
-            return back()->with('success', '¡Hemos enviado un enlace de recuperación a tu correo electrónico! Revisa los logs del sistema.');
+            return back()->with('success', '¡Hemos enviado un enlace de recuperación a tu correo electrónico!');
             
         } catch (\Exception $e) {
             \Log::error('Error en envío de correo: ' . $e->getMessage());
@@ -57,7 +57,6 @@ class PasswordController extends Controller
 
     public function showResetForm($token)
     {
-        // Buscar el email asociado al token
         $passwordReset = DB::table('password_resets')
             ->whereRaw('created_at > DATE_SUB(NOW(), INTERVAL 24 HOUR)')
             ->get()
@@ -69,7 +68,6 @@ class PasswordController extends Controller
             return redirect()->route('password.request')->with('error', 'Token inválido o expirado.');
         }
 
-        // Buscar el usuario completo
         $user = User::where('email', $passwordReset->email)->first();
 
         return view('auth.reset-password', [
@@ -83,10 +81,22 @@ class PasswordController extends Controller
     {
         $request->validate([
             'token' => 'required',
-            'password' => 'required|min:6|confirmed',
+            'password' => [
+                'required',
+                'min:8',
+                'confirmed',
+                Password::min(8)
+                    ->mixedCase()
+                    ->numbers()
+            ],
+        ], [
+            'password.required' => 'La contraseña es obligatoria.',
+            'password.min' => 'La contraseña debe tener al menos 8 caracteres.',
+            'password.confirmed' => 'Las contraseñas no coinciden.',
+            'password.mixed' => 'La contraseña debe contener mayúsculas y minúsculas.',
+            'password.numbers' => 'La contraseña debe contener al menos un número.',
         ]);
 
-        // Buscar el token válido
         $passwordReset = DB::table('password_resets')
             ->whereRaw('created_at > DATE_SUB(NOW(), INTERVAL 24 HOUR)')
             ->get()
@@ -98,12 +108,10 @@ class PasswordController extends Controller
             return back()->withErrors(['password' => 'Link inválido o expirado.']);
         }
 
-        // Actualizar la contraseña del usuario
         $user = User::where('email', $passwordReset->email)->first();
         $user->password = Hash::make($request->password);
         $user->save();
 
-        // Eliminar el token usado
         DB::table('password_resets')->where('email', $passwordReset->email)->delete();
 
         return redirect()->route('login')->with('success', '¡Tu contraseña ha sido restablecida exitosamente!');

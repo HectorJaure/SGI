@@ -104,16 +104,13 @@
                     </label>
                     <div class="password-container">
                         <input type="password" name="password" class="form-input @error('password') error @enderror" 
-                               placeholder="Mínimo 6 caracteres" required
-                               minlength="6" id="password-input">
+                               placeholder="Mínimo 8 caracteres con mayúsculas, minúsculas y números" required
+                               minlength="8" id="password-input">
                         <button type="button" class="password-toggle" id="togglePassword">
                             <i class="fas fa-eye"></i>
                         </button>
                     </div>
-                    <div class="password-strength">
-                        <div class="strength-bar" id="strength-bar"></div>
-                    </div>
-                    <div class="strength-text" id="strength-text">Seguridad de la contraseña</div>
+                    <div class="form-help">La contraseña debe tener al menos 8 caracteres, incluyendo mayúsculas, minúsculas y números.</div>
                     @error('password')
                         <div class="form-help error">{{ $message }}</div>
                     @enderror
@@ -126,11 +123,12 @@
                     <div class="password-container">
                         <input type="password" name="password_confirmation" class="form-input @error('password_confirmation') error @enderror" 
                                placeholder="Repita la contraseña" required
-                               minlength="6" id="confirm-password-input">
+                               minlength="8" id="confirm-password-input">
                         <button type="button" class="password-toggle" id="toggleConfirmPassword">
                             <i class="fas fa-eye"></i>
                         </button>
                     </div>
+                    <small id="password-match" style="font-size: 0.75rem; display: none;"></small>
                     @error('password_confirmation')
                         <div class="form-help error">{{ $message }}</div>
                     @enderror
@@ -303,32 +301,6 @@
         padding-right: 50px;
     }
 
-    /* Password strength */
-    .password-strength {
-        margin-top: 8px;
-        height: 4px;
-        background: #e1e8ed;
-        border-radius: 2px;
-        overflow: hidden;
-    }
-
-    .strength-bar {
-        height: 100%;
-        width: 0%;
-        transition: all 0.3s ease;
-        border-radius: 2px;
-    }
-
-    .strength-weak { background: #e74c3c; width: 33%; }
-    .strength-medium { background: #f39c12; width: 66%; }
-    .strength-strong { background: #27ae60; width: 100%; }
-
-    .strength-text {
-        font-size: 12px;
-        color: #7f8c8d;
-        margin-top: 4px;
-    }
-
     /* Botones */
     .form-actions {
         display: flex;
@@ -476,7 +448,32 @@
             });
         }
 
-        // El resto de tu código JavaScript existente...
+        // Verificar coincidencia de contraseñas
+        function checkPasswordMatch() {
+            const password = document.getElementById('password-input').value;
+            const confirm = document.getElementById('confirm-password-input').value;
+            const matchElement = document.getElementById('password-match');
+            
+            if (confirm.length === 0) {
+                matchElement.style.display = 'none';
+                return;
+            }
+            
+            if (password === confirm) {
+                matchElement.textContent = '✓ Las contraseñas coinciden';
+                matchElement.style.color = '#27ae60';
+            } else {
+                matchElement.textContent = '✗ Las contraseñas no coinciden';
+                matchElement.style.color = '#e74c3c';
+            }
+            matchElement.style.display = 'block';
+        }
+
+        // Event listeners para verificar coincidencia
+        document.getElementById('password-input').addEventListener('input', checkPasswordMatch);
+        document.getElementById('confirm-password-input').addEventListener('input', checkPasswordMatch);
+
+        // Funciones de validación
         function mostrarError(campo, mensaje) {
             removerError(campo);
             
@@ -499,64 +496,6 @@
             }
         }
 
-        // Check password strength
-        function checkPasswordStrength(password) {
-            const strengthBar = document.getElementById('strength-bar');
-            const strengthText = document.getElementById('strength-text');
-            
-            let strength = 0;
-            let text = 'Muy débil';
-            let className = 'strength-weak';
-
-            if (password.length >= 6) strength++;
-            if (password.length >= 8) strength++;
-            if (/[A-Z]/.test(password)) strength++;
-            if (/[0-9]/.test(password)) strength++;
-            if (/[^A-Za-z0-9]/.test(password)) strength++;
-
-            switch (strength) {
-                case 0:
-                case 1:
-                    text = 'Débil';
-                    className = 'strength-weak';
-                    break;
-                case 2:
-                case 3:
-                    text = 'Media';
-                    className = 'strength-medium';
-                    break;
-                case 4:
-                case 5:
-                    text = 'Fuerte';
-                    className = 'strength-strong';
-                    break;
-            }
-
-            strengthBar.className = 'strength-bar ' + className;
-            strengthText.textContent = text;
-        }
-
-        // Validación simple del campo nombre (solo formato)
-        function validarNombre(campo) {
-            const valor = campo.value.trim();
-            
-            // Limpiar error previo
-            removerError(campo);
-            
-            // Si el campo está vacío, no mostrar error de formato
-            if (!valor) {
-                return true;
-            }
-
-            // Validar que solo contenga letras, espacios y acentos
-            if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/.test(valor)) {
-                mostrarError(campo, 'El formato del campo nombre no es válido. Solo se permiten letras y espacios.');
-                return false;
-            }
-
-            return true;
-        }
-
         // Validación específica para contraseñas
         function validarPassword(password, confirmPassword) {
             let valido = true;
@@ -567,8 +506,8 @@
 
             if (password && password.value) {
                 // Validar longitud de contraseña principal
-                if (password.value.length < 6) {
-                    mostrarError(password, 'La contraseña debe tener al menos 6 caracteres');
+                if (password.value.length < 8) {
+                    mostrarError(password, 'La contraseña debe tener al menos 8 caracteres');
                     valido = false;
                 }
                 
@@ -584,46 +523,10 @@
             return valido;
         }
 
-        // Guardar contraseñas temporalmente
-        function guardarContraseñasTemporalmente(formulario) {
-            const password = formulario.querySelector('[name="password"]');
-            const confirmPassword = formulario.querySelector('[name="password_confirmation"]');
-            
-            if (password && password.value) {
-                sessionStorage.setItem('tempPassword', password.value);
-            }
-            if (confirmPassword && confirmPassword.value) {
-                sessionStorage.setItem('tempConfirmPassword', confirmPassword.value);
-            }
-        }
-
-        // Restaurar contraseñas temporalmente
-        function restaurarContraseñasTemporalmente(formulario) {
-            const tempPassword = sessionStorage.getItem('tempPassword');
-            const tempConfirmPassword = sessionStorage.getItem('tempConfirmPassword');
-            
-            const password = formulario.querySelector('[name="password"]');
-            const confirmPassword = formulario.querySelector('[name="password_confirmation"]');
-            
-            if (tempPassword && password) {
-                password.value = tempPassword;
-            }
-            if (tempConfirmPassword && confirmPassword) {
-                confirmPassword.value = tempConfirmPassword;
-            }
-            
-            // Limpiar almacenamiento temporal
-            sessionStorage.removeItem('tempPassword');
-            sessionStorage.removeItem('tempConfirmPassword');
-        }
-
         // Validación del formulario completo al enviar
         function validarFormularioUsuario(event) {
             const formulario = event.target;
             let valido = true;
-
-            // Guardar contraseñas antes de la validación
-            guardarContraseñasTemporalmente(formulario);
 
             // Limpiar todos los errores previos
             formulario.querySelectorAll('.error-message').forEach(error => error.remove());
@@ -646,14 +549,7 @@
                 valido = false;
             }
 
-            // Validar formato de nombre (solo si tiene valor)
-            const nombre = formulario.querySelector('[name="nombre"]');
-            if (nombre && nombre.value && !/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/.test(nombre.value)) {
-                mostrarError(nombre, 'El formato del campo nombre no es válido. Solo se permiten letras y espacios.');
-                valido = false;
-            }
-
-            // Validar contraseñas (solo si se están cambiando)
+            // Validar contraseñas
             const password = formulario.querySelector('[name="password"]');
             const confirmPassword = formulario.querySelector('[name="password_confirmation"]');
             
@@ -663,84 +559,21 @@
                 }
             }
 
-            // Si no es válido, prevenir envío y restaurar contraseñas
+            // Si no es válido, prevenir envío y mostrar scroll al primer error
             if (!valido) {
                 event.preventDefault();
-                
-                // Pequeño delay para asegurar que las contraseñas se restauren después del preventDefault
-                setTimeout(() => {
-                    restaurarContraseñasTemporalmente(formulario);
-                    
-                    // Hacer scroll al primer error
-                    const primerError = formulario.querySelector('.error');
-                    if (primerError) {
-                        primerError.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    }
-                }, 100);
-            } else {
-                // Si es válido, limpiar el almacenamiento temporal
-                sessionStorage.removeItem('tempPassword');
-                sessionStorage.removeItem('tempConfirmPassword');
+                const primerError = formulario.querySelector('.error');
+                if (primerError) {
+                    primerError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
             }
 
             return valido;
         }
 
-        // Inicialización cuando el DOM está listo
-        const formularioUsuario = document.getElementById('form-crear-usuario') || document.getElementById('form-editar-usuario');
-        
+        // Prevenir envío del formulario si no es válido
+        const formularioUsuario = document.getElementById('form-crear-usuario');
         if (formularioUsuario) {
-            // Password strength real-time check (solo para crear usuario)
-            const passwordInput = document.getElementById('password-input');
-            if (passwordInput) {
-                passwordInput.addEventListener('input', function(e) {
-                    checkPasswordStrength(e.target.value);
-                });
-            }
-
-            // Restaurar contraseñas si existen en el almacenamiento temporal
-            setTimeout(() => {
-                restaurarContraseñasTemporalmente(formularioUsuario);
-            }, 50);
-
-            // Validación del campo NOMBRE solo al salir (blur)
-            const campoNombre = formularioUsuario.querySelector('[name="nombre"]');
-            if (campoNombre) {
-                campoNombre.addEventListener('blur', function() {
-                    validarNombre(this);
-                });
-            }
-
-            // Validación del campo EMAIL solo al salir (blur)
-            const campoEmail = formularioUsuario.querySelector('[name="email"]');
-            if (campoEmail) {
-                campoEmail.addEventListener('blur', function() {
-                    const valor = this.value.trim();
-                    removerError(this);
-                    
-                    if (valor && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(valor)) {
-                        mostrarError(this, 'El formato del correo electrónico no es válido');
-                    }
-                });
-            }
-
-            // Validación en tiempo real para contraseñas
-            const password = formularioUsuario.querySelector('[name="password"]');
-            const confirmPassword = formularioUsuario.querySelector('[name="password_confirmation"]');
-            
-            if (password) {
-                password.addEventListener('input', function() {
-                    validarPassword(password, confirmPassword);
-                });
-            }
-            
-            if (confirmPassword) {
-                confirmPassword.addEventListener('input', function() {
-                    validarPassword(password, confirmPassword);
-                });
-            }
-
-            // Prevenir envío del formulario si no es válido
             formularioUsuario.addEventListener('submit', validarFormularioUsuario);
         }
     });

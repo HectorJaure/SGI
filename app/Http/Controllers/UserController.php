@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 use App\Http\Controllers\NotificationController;
+use Illuminate\Validation\Rules\Password;
 
 class UserController extends Controller
 {
@@ -86,9 +87,22 @@ class UserController extends Controller
             'username' => 'required|string|max:255|unique:users',
             'email' => 'required|email|unique:users',
             'departamento' => 'nullable|string|max:255',
-            'password' => 'required|min:6|confirmed',
+            'password' => [
+                'required',
+                'min:8',
+                'confirmed',
+                Password::min(8)
+                    ->mixedCase()
+                    ->numbers()
+            ],
             'rol' => ['required', Rule::in(['Administrador', 'Usuario'])],
             'telefono' => 'nullable|string|max:20|regex:/^[\d\s\-\+\(\)]+$/',
+        ], [
+            'password.required' => 'La contraseña es obligatoria.',
+            'password.min' => 'La contraseña debe tener al menos 8 caracteres.',
+            'password.confirmed' => 'Las contraseñas no coinciden.',
+            'password.mixed' => 'La contraseña debe contener mayúsculas y minúsculas.',
+            'password.numbers' => 'La contraseña debe contener al menos un número.',
         ]);
 
         $user = User::create([
@@ -153,9 +167,21 @@ class UserController extends Controller
             ],
             'departamento' => 'nullable|string|max:255',
             'rol' => ['required', Rule::in(['Administrador', 'Usuario'])],
-            'password' => 'nullable|min:6|confirmed',
+            'password' => [
+                'nullable',
+                'min:8',
+                'confirmed',
+                Password::min(8)
+                    ->mixedCase()
+                    ->numbers()
+            ],
             'current_password' => 'required',
             'telefono' => 'nullable|string|max:20|regex:/^[\d\s\-\+\(\)]+$/'
+        ], [
+            'password.min' => 'La contraseña debe tener al menos 8 caracteres.',
+            'password.confirmed' => 'Las contraseñas no coinciden.',
+            'password.mixed' => 'La contraseña debe contener mayúsculas y minúsculas.',
+            'password.numbers' => 'La contraseña debe contener al menos un número.',
         ]);
 
         // Verificar contraseña actual

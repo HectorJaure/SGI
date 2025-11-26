@@ -15,6 +15,8 @@
             --blanco: #ffffff;
             --verde: #38a169;
             --rojo: #e53e3e;
+            --naranja: #ed8936;
+            --amarillo: #ecc94b;
         }
         
         * {
@@ -186,14 +188,60 @@
             border-left: 4px solid var(--azul-claro);
             font-size: 0.85rem;
         }
-        
-        .user-info p {
-            margin-bottom: 5px;
+
+        .password-requirements {
+            background-color: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 15px;
+            font-size: 0.8rem;
         }
-        
-        .user-info p:last-child {
-            margin-bottom: 0;
+
+        .password-requirements h4 {
+            margin-bottom: 8px;
+            color: var(--azul-marino);
+            font-size: 0.85rem;
         }
+
+        .requirement {
+            display: flex;
+            align-items: center;
+            margin-bottom: 4px;
+            color: var(--gris-medio);
+        }
+
+        .requirement.valid {
+            color: var(--verde);
+        }
+
+        .requirement.invalid {
+            color: var(--rojo);
+        }
+
+        .requirement i {
+            margin-right: 6px;
+            font-size: 0.7rem;
+        }
+
+        .password-strength {
+            margin-top: 8px;
+            height: 4px;
+            border-radius: 2px;
+            background-color: var(--gris-claro);
+            overflow: hidden;
+        }
+
+        .strength-bar {
+            height: 100%;
+            width: 0%;
+            transition: all 0.3s ease;
+        }
+
+        .strength-weak { background-color: var(--rojo); width: 25%; }
+        .strength-fair { background-color: var(--naranja); width: 50%; }
+        .strength-good { background-color: var(--amarillo); width: 75%; }
+        .strength-strong { background-color: var(--verde); width: 100%; }
         
         @media (max-width: 480px) {
             .login-container {
@@ -229,10 +277,38 @@
         </div>
 
         <div class="instructions">
-            <p><strong>Instrucciones:</strong> Ingresa tu nueva contraseña. Debe tener al menos 6 caracteres.</p>
+            <p><strong>Requisitos de contraseña:</strong></p>
+            <ul style="margin: 8px 0; padding-left: 20px; font-size: 0.8rem;">
+                <li>Mínimo 8 caracteres</li>
+                <li>Al menos una mayúscula y una minúscula</li>
+                <li>Al menos un número</li>
+            </ul>
+        </div>
+
+        <div class="password-requirements">
+            <h4>Verifica los requisitos:</h4>
+            <div class="requirement invalid" id="req-length">
+                <i class="fas fa-circle"></i>
+                <span>Mínimo 8 caracteres</span>
+            </div>
+            <div class="requirement invalid" id="req-uppercase">
+                <i class="fas fa-circle"></i>
+                <span>Al menos una mayúscula</span>
+            </div>
+            <div class="requirement invalid" id="req-lowercase">
+                <i class="fas fa-circle"></i>
+                <span>Al menos una minúscula</span>
+            </div>
+            <div class="requirement invalid" id="req-number">
+                <i class="fas fa-circle"></i>
+                <span>Al menos un número</span>
+            </div>
+            <div class="password-strength">
+                <div class="strength-bar" id="strength-bar"></div>
+            </div>
         </div>
         
-        <form method="POST" action="{{ route('password.update') }}">
+        <form method="POST" action="{{ route('password.update') }}" id="passwordForm">
             @csrf
             <input type="hidden" name="token" value="{{ $token }}">
             <input type="hidden" name="email" value="{{ $userEmail }}">
@@ -241,7 +317,11 @@
                 <label for="password">Nueva Contraseña</label>
                 <div class="input-with-icon">
                     <i class="fas fa-lock input-icon"></i>
-                    <input type="password" id="password" name="password" placeholder="Nueva contraseña" required minlength="6">
+                    <input type="password" id="password" name="password" 
+                           placeholder="Mínimo 8 caracteres con mayúsculas, números y símbolos" 
+                           required 
+                           minlength="8"
+                           oninput="checkPasswordStrength()">
                 </div>
                 @error('password')
                     <small style="color: var(--rojo); font-size: 0.75rem;">{{ $message }}</small>
@@ -252,11 +332,16 @@
                 <label for="password_confirmation">Confirmar Nueva Contraseña</label>
                 <div class="input-with-icon">
                     <i class="fas fa-lock input-icon"></i>
-                    <input type="password" id="password_confirmation" name="password_confirmation" placeholder="Confirmar nueva contraseña" required minlength="6">
+                    <input type="password" id="password_confirmation" name="password_confirmation" 
+                           placeholder="Confirmar contraseña" 
+                           required 
+                           minlength="8"
+                           oninput="checkPasswordMatch()">
                 </div>
+                <small id="password-match" style="font-size: 0.75rem; display: none;"></small>
             </div>
             
-            <button type="submit" class="btn">
+            <button type="submit" class="btn" id="submit-btn">
                 <i class="fas fa-save"></i> Restablecer Contraseña
             </button>
 
@@ -271,5 +356,104 @@
             <p>Instituto Tecnológico Superior de Nochistlán</p>
         </div>
     </div>
+
+    <script>
+        function checkPasswordStrength() {
+            const password = document.getElementById('password').value;
+            const requirements = {
+                length: password.length >= 8,
+                uppercase: /[A-Z]/.test(password),
+                lowercase: /[a-z]/.test(password),
+                number: /[0-9]/.test(password),
+            };
+
+            // Actualizar indicadores visuales
+            updateRequirement('length', requirements.length);
+            updateRequirement('uppercase', requirements.uppercase);
+            updateRequirement('lowercase', requirements.lowercase);
+            updateRequirement('number', requirements.number);
+            updateRequirement('symbol', requirements.symbol);
+
+            // Calcular fortaleza
+            const strength = calculateStrength(requirements);
+            updateStrengthBar(strength);
+        }
+
+        function updateRequirement(type, isValid) {
+            const element = document.getElementById(`req-${type}`);
+            if (isValid) {
+                element.classList.remove('invalid');
+                element.classList.add('valid');
+                element.innerHTML = '<i class="fas fa-check-circle"></i><span>' + element.textContent + '</span>';
+            } else {
+                element.classList.remove('valid');
+                element.classList.add('invalid');
+                element.innerHTML = '<i class="fas fa-circle"></i><span>' + element.textContent + '</span>';
+            }
+        }
+
+        function calculateStrength(requirements) {
+            let score = 0;
+            const total = Object.keys(requirements).length;
+            
+            Object.values(requirements).forEach(met => {
+                if (met) score++;
+            });
+
+            return score / total;
+        }
+
+        function updateStrengthBar(strength) {
+            const bar = document.getElementById('strength-bar');
+            bar.className = 'strength-bar';
+            
+            if (strength === 0) {
+                bar.style.width = '0%';
+            } else if (strength <= 0.25) {
+                bar.classList.add('strength-weak');
+            } else if (strength <= 0.5) {
+                bar.classList.add('strength-fair');
+            } else if (strength <= 0.75) {
+                bar.classList.add('strength-good');
+            } else {
+                bar.classList.add('strength-strong');
+            }
+        }
+
+        function checkPasswordMatch() {
+            const password = document.getElementById('password').value;
+            const confirm = document.getElementById('password_confirmation').value;
+            const matchElement = document.getElementById('password-match');
+            const submitBtn = document.getElementById('submit-btn');
+            
+            if (confirm.length === 0) {
+                matchElement.style.display = 'none';
+                submitBtn.disabled = false;
+                submitBtn.style.backgroundColor = '';
+                submitBtn.innerHTML = '<i class="fas fa-save"></i> Restablecer Contraseña';
+                return;
+            }
+            
+            if (password === confirm) {
+                matchElement.textContent = '✓ Las contraseñas coinciden';
+                matchElement.style.color = 'var(--verde)';
+                submitBtn.disabled = false;
+                submitBtn.style.backgroundColor = '';
+                submitBtn.innerHTML = '<i class="fas fa-save"></i> Restablecer Contraseña';
+            } else {
+                matchElement.textContent = '✗ Las contraseñas no coinciden';
+                matchElement.style.color = 'var(--rojo)';
+                submitBtn.disabled = true;
+                submitBtn.style.backgroundColor = 'var(--gris-medio)';
+                submitBtn.innerHTML = '<i class="fas fa-exclamation-circle"></i> Las contraseñas no coinciden';
+            }
+            matchElement.style.display = 'block';
+        }
+
+        // Validación inicial
+        document.addEventListener('DOMContentLoaded', function() {
+            checkPasswordStrength();
+        });
+    </script>
 </body>
 </html>

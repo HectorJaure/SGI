@@ -120,12 +120,12 @@
                     <div class="password-container">
                         <input type="password" name="password" class="form-input @error('password') error @enderror" 
                                placeholder="Dejar en blanco para mantener la actual"
-                               minlength="6" id="password-input">
+                               minlength="8" id="password-input">
                         <button type="button" class="password-toggle" id="togglePassword">
                             <i class="fas fa-eye"></i>
                         </button>
                     </div>
-                    <div class="form-help">Mínimo 6 caracteres. Solo complete si desea cambiar la contraseña.</div>
+                    <div class="form-help">Mínimo 8 caracteres con mayúsculas, minúsculas y números. Solo complete si desea cambiar la contraseña.</div>
                     @error('password')
                         <div class="form-help error">{{ $message }}</div>
                     @enderror
@@ -136,11 +136,12 @@
                     <div class="password-container">
                         <input type="password" name="password_confirmation" class="form-input @error('password_confirmation') error @enderror" 
                                placeholder="Repita la nueva contraseña"
-                               minlength="6" id="confirm-password-input">
+                               minlength="8" id="confirm-password-input">
                         <button type="button" class="password-toggle" id="toggleConfirmPassword">
                             <i class="fas fa-eye"></i>
                         </button>
                     </div>
+                    <small id="password-match" style="font-size: 0.75rem; display: none;"></small>
                     @error('password_confirmation')
                         <div class="form-help error">{{ $message }}</div>
                     @enderror
@@ -491,7 +492,32 @@
             }
         });
 
-        // El resto de tu código JavaScript existente para validaciones...
+        // Verificar coincidencia de contraseñas
+        function checkPasswordMatch() {
+            const password = document.getElementById('password-input').value;
+            const confirm = document.getElementById('confirm-password-input').value;
+            const matchElement = document.getElementById('password-match');
+            
+            if (confirm.length === 0) {
+                matchElement.style.display = 'none';
+                return;
+            }
+            
+            if (password === confirm) {
+                matchElement.textContent = '✓ Las contraseñas coinciden';
+                matchElement.style.color = '#27ae60';
+            } else {
+                matchElement.textContent = '✗ Las contraseñas no coinciden';
+                matchElement.style.color = '#e74c3c';
+            }
+            matchElement.style.display = 'block';
+        }
+
+        // Event listeners para verificar coincidencia
+        document.getElementById('password-input').addEventListener('input', checkPasswordMatch);
+        document.getElementById('confirm-password-input').addEventListener('input', checkPasswordMatch);
+
+        // Funciones de validación
         function mostrarError(campo, mensaje) {
             removerError(campo);
             
@@ -515,56 +541,6 @@
             }
         }
 
-        // Validación individual de campos de usuario
-        function validarCampoUsuario(campo) {
-            const valor = campo.value.trim();
-            
-            // Limpiar error previo
-            removerError(campo);
-            
-            // Validar campo requerido
-            if (campo.hasAttribute('required') && !valor) {
-                mostrarError(campo, 'Este campo es obligatorio');
-                return false;
-            }
-
-            // Si el campo está vacío pero no es requerido, es válido
-            if (!valor && !campo.hasAttribute('required')) {
-                return true;
-            }
-
-            // Validaciones específicas por tipo de campo
-            switch(campo.type) {
-                case 'email':
-                    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(valor)) {
-                        mostrarError(campo, 'Formato de correo electrónico inválido');
-                        return false;
-                    }
-                    break;
-                case 'tel':
-                    if (!/^[\d\s\-\+\(\)]+$/.test(valor)) {
-                        mostrarError(campo, 'Formato de teléfono inválido');
-                        return false;
-                    }
-                    break;
-                case 'password':
-                    if (valor.length < 6) {
-                        mostrarError(campo, 'La contraseña debe tener al menos 6 caracteres');
-                        return false;
-                    }
-                    break;
-            }
-
-            // Validar longitud máxima
-            const maxLength = campo.getAttribute('maxlength');
-            if (maxLength && valor.length > parseInt(maxLength)) {
-                mostrarError(campo, `No puede exceder ${maxLength} caracteres`);
-                return false;
-            }
-
-            return true;
-        }
-
         // Validación específica para contraseñas
         function validarPassword(password, confirmPassword) {
             let valido = true;
@@ -575,8 +551,8 @@
 
             // Solo validar si hay valor en la contraseña
             if (password && password.value) {
-                if (password.value.length < 6) {
-                    mostrarError(password, 'La contraseña debe tener al menos 6 caracteres');
+                if (password.value.length < 8) {
+                    mostrarError(password, 'La contraseña debe tener al menos 8 caracteres');
                     valido = false;
                 }
                 
@@ -599,7 +575,7 @@
             formulario.querySelectorAll('.error').forEach(campo => campo.classList.remove('error'));
 
             // Validar campos requeridos
-            const camposRequeridos = ['nombre', 'username', 'email', 'rol'];
+            const camposRequeridos = ['nombre', 'username', 'email', 'rol', 'current_password'];
             camposRequeridos.forEach(campoName => {
                 const campo = formulario.querySelector(`[name="${campoName}"]`);
                 if (campo && !campo.value.trim()) {
@@ -615,23 +591,6 @@
                 valido = false;
             }
 
-            // Validar longitud de campos
-            const validacionesLongitud = [
-                { campo: 'nombre', max: 255 },
-                { campo: 'username', max: 255 },
-                { campo: 'email', max: 255 },
-                { campo: 'departamento', max: 255 },
-                { campo: 'telefono', max: 20 }
-            ];
-
-            validacionesLongitud.forEach(validacion => {
-                const campo = formulario.querySelector(`[name="${validacion.campo}"]`);
-                if (campo && campo.value.length > validacion.max) {
-                    mostrarError(campo, `No puede exceder ${validacion.max} caracteres`);
-                    valido = false;
-                }
-            });
-
             // Validar contraseñas (solo si se están cambiando)
             const password = formulario.querySelector('[name="password"]');
             const confirmPassword = formulario.querySelector('[name="password_confirmation"]');
@@ -640,13 +599,6 @@
                 if (!validarPassword(password, confirmPassword)) {
                     valido = false;
                 }
-            }
-
-            // Validar formato de teléfono (opcional)
-            const telefono = formulario.querySelector('[name="telefono"]');
-            if (telefono && telefono.value && !/^[\d\s\-\+\(\)]+$/.test(telefono.value)) {
-                mostrarError(telefono, 'El formato del teléfono no es válido');
-                valido = false;
             }
 
             // Si no es válido, prevenir envío y mostrar scroll al primer error
@@ -661,38 +613,9 @@
             return valido;
         }
 
-        // Inicialización cuando el DOM está listo
-        const formularioUsuario = document.getElementById('form-crear-usuario') || document.getElementById('form-editar-usuario');
-        
+        // Prevenir envío del formulario si no es válido
+        const formularioUsuario = document.getElementById('form-editar-usuario');
         if (formularioUsuario) {
-            // Agregar validación en tiempo real
-            const campos = formularioUsuario.querySelectorAll('input, select');
-            campos.forEach(campo => {
-                // Validación cuando pierde el foco (excepto contraseñas)
-                campo.addEventListener('blur', function() {
-                    if (this.name !== 'password' && this.name !== 'password_confirmation' && this.name !== 'current_password') {
-                        validarCampoUsuario(this);
-                    }
-                });
-                
-                // Validación en tiempo real para contraseñas
-                if (campo.name === 'password' || campo.name === 'password_confirmation') {
-                    campo.addEventListener('input', function() {
-                        const password = formularioUsuario.querySelector('[name="password"]');
-                        const confirmPassword = formularioUsuario.querySelector('[name="password_confirmation"]');
-                        
-                        if (password.value || confirmPassword.value) {
-                            validarPassword(password, confirmPassword);
-                        } else {
-                            // Limpiar errores si ambos están vacíos
-                            removerError(password);
-                            removerError(confirmPassword);
-                        }
-                    });
-                }
-            });
-
-            // Prevenir envío del formulario si no es válido
             formularioUsuario.addEventListener('submit', validarFormularioUsuario);
         }
     });
