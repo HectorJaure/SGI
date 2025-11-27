@@ -21,17 +21,14 @@ class UserController extends Controller
         
         $query = User::query();
 
-        // Aplicar filtro de departamento con búsqueda parcial
         if ($request->has('departamento') && !empty($request->departamento)) {
             $query->where('departamento', 'LIKE', '%' . $request->departamento . '%');
         }
 
-        // Aplicar filtro de rol
         if ($request->has('rol') && !empty($request->rol)) {
             $query->where('rol', $request->rol);
         }
 
-        // Aplicar filtro de búsqueda
         if ($request->has('search') && !empty($request->search)) {
             $searchTerm = $request->search;
             $query->where(function($q) use ($searchTerm) {
@@ -43,10 +40,8 @@ class UserController extends Controller
 
         $users = $query->paginate($perPage);
 
-        // Mantener los parámetros de filtro en la paginación
         $users->appends($request->except('page'));
 
-        // Obtener departamentos únicos para el datalist
         $departamentos = User::distinct('departamento')
             ->whereNotNull('departamento')
             ->where('departamento', '!=', '')
@@ -59,12 +54,10 @@ class UserController extends Controller
 
     public function create()
     {
-        // Verificar si el usuario es administrador
         if (session('user_rol') !== 'Administrador') {
             return redirect()->route('dashboard')->with('error', 'No tienes permisos para acceder a esta sección.');
         }
 
-        // Obtener departamentos existentes para el datalist
         $departamentos = User::distinct('departamento')
             ->whereNotNull('departamento')
             ->where('departamento', '!=', '')
@@ -77,7 +70,6 @@ class UserController extends Controller
 
     public function store(Request $request)
     {
-        // Verificar si el usuario es administrador
         if (session('user_rol') !== 'Administrador') {
             return redirect()->route('dashboard')->with('error', 'No tienes permisos para realizar esta acción.');
         }
@@ -115,7 +107,6 @@ class UserController extends Controller
             'telefono' => $request->telefono,
         ]);
 
-        // NOTIFICACIÓN AUTOMÁTICA - Nuevo usuario (incluye quién lo creó)
         $usuarioActual = session('user_nombre') ?? 'Administrador';
         NotificationController::createNotification(
             'Nuevo Usuario Registrado',
@@ -129,12 +120,10 @@ class UserController extends Controller
 
     public function edit(User $user)
     {
-        // Verificar si el usuario es administrador
         if (session('user_rol') !== 'Administrador') {
             return redirect()->route('dashboard')->with('error', 'No tienes permisos para acceder a esta sección.');
         }
 
-        // Obtener departamentos existentes para el datalist
         $departamentos = User::distinct('departamento')
             ->whereNotNull('departamento')
             ->where('departamento', '!=', '')
@@ -147,7 +136,6 @@ class UserController extends Controller
 
     public function update(Request $request, User $user)
     {
-        // Verificar si el usuario es administrador
         if (session('user_rol') !== 'Administrador') {
             return redirect()->route('dashboard')->with('error', 'No tienes permisos para realizar esta acción.');
         }
@@ -184,7 +172,6 @@ class UserController extends Controller
             'password.numbers' => 'La contraseña debe contener al menos un número.',
         ]);
 
-        // Verificar contraseña actual
         $currentUserId = session('user_id');
         $currentUser = User::find($currentUserId);
         
@@ -200,15 +187,13 @@ class UserController extends Controller
             'rol' => $request->rol,
             'telefono' => $request->telefono,
         ];
-        
-        // Actualizar contraseña solo si se proporcionó una nueva
+
         if ($request->filled('password') && !empty(trim($request->password))) {
             $data['password'] = Hash::make($request->password);
         }
 
         $user->update($data);
 
-        // NOTIFICACIÓN AUTOMÁTICA - Usuario actualizado (incluye quién lo actualizó)
         $usuarioActual = session('user_nombre') ?? 'Administrador';
         NotificationController::createNotification(
             'Usuario Actualizado',
@@ -222,7 +207,6 @@ class UserController extends Controller
     
     public function verifyPassword(Request $request)
     {
-        // Verificar si el usuario es administrador
         if (session('user_rol') !== 'Administrador') {
             return response()->json([
                 'success' => false,
@@ -231,11 +215,9 @@ class UserController extends Controller
         }
 
         try {
-            // Obtener usuario actual desde la sesión
             $currentUserId = session('user_id');
             $currentUser = User::find($currentUserId);
 
-            // Verificar que el usuario esté autenticado
             if (!$currentUserId || !$currentUser) {
                 return response()->json([
                     'success' => false,
@@ -243,7 +225,6 @@ class UserController extends Controller
                 ], 401);
             }
 
-            // Validación básica
             if (empty($request->password)) {
                 return response()->json([
                     'success' => false,
@@ -251,7 +232,6 @@ class UserController extends Controller
                 ], 422);
             }
 
-            // Verificar contraseña
             if (Hash::check($request->password, $currentUser->password)) {
                 return response()->json([
                     'success' => true,
@@ -274,7 +254,6 @@ class UserController extends Controller
 
     public function destroy(Request $request, User $user)
     {
-        // Verificar si el usuario es administrador
         if (session('user_rol') !== 'Administrador') {
             return response()->json([
                 'success' => false,
@@ -283,11 +262,9 @@ class UserController extends Controller
         }
 
         try {
-            // Obtener usuario actual desde la sesión
             $currentUserId = session('user_id');
             $currentUser = User::find($currentUserId);
 
-            // Verificar que el usuario esté autenticado
             if (!$currentUserId || !$currentUser) {
                 return response()->json([
                     'success' => false,
@@ -295,7 +272,6 @@ class UserController extends Controller
                 ], 401);
             }
 
-            // Validar contraseña
             if (empty($request->current_password)) {
                 return response()->json([
                     'success' => false,
@@ -303,7 +279,6 @@ class UserController extends Controller
                 ], 422);
             }
 
-            // Verificar contraseña
             if (!Hash::check($request->current_password, $currentUser->password)) {
                 return response()->json([
                     'success' => false,
@@ -311,7 +286,6 @@ class UserController extends Controller
                 ], 401);
             }
 
-            // Evitar auto-eliminación
             if ($currentUser->id == $user->id) {
                 return response()->json([
                     'success' => false,
@@ -322,7 +296,6 @@ class UserController extends Controller
             $nombreUsuario = $user->nombre;
         $user->delete();
 
-        // NOTIFICACIÓN AUTOMÁTICA - Usuario eliminado (incluye quién lo eliminó)
         $usuarioActual = session('user_nombre') ?? 'Administrador';
         NotificationController::createNotification(
             'Usuario Eliminado',

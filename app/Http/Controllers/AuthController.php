@@ -24,7 +24,6 @@ class AuthController extends Controller
             'password' => 'required',
         ]);
 
-        // Buscar usuario por username o email
         $user = User::where('username', $request->username)
                     ->orWhere('email', $request->username)
                     ->first();

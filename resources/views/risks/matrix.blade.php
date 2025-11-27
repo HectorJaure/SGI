@@ -131,8 +131,21 @@
                 <h3 class="section-title">Matriz de Identificación y Evaluación de Peligros</h3>
                 <div class="header-controls">
                     <span style="font-size: 0.9rem; color: var(--gris-medio); margin-right: 15px;">
-                        Total: {{ $riesgos->count() }} riesgos
+                        @if($perPage === 'all')
+                            Total: {{ $riesgos->count() }} riesgos
+                        @else
+                            Mostrando: {{ $riesgos->count() }} de {{ $riesgos->total() }} riesgos
+                        @endif
                     </span>
+                    <div class="pagination-selector">
+                        <select id="perPage" name="per_page" onchange="changePerPage(this.value)" 
+                                style="padding: 5px 10px; border: 1px solid var(--gris-claro); border-radius: 4px; font-size: 0.9rem;">
+                            <option value="10" {{ $perPage == 10 ? 'selected' : '' }}>10</option>
+                            <option value="25" {{ $perPage == 25 ? 'selected' : '' }}>25</option>
+                            <option value="50" {{ $perPage == 50 ? 'selected' : '' }}>50</option>
+                            <option value="all" {{ $perPage === 'all' ? 'selected' : '' }}>Mostrar todo</option>
+                        </select>
+                    </div>
                 </div>
             </div>
     
@@ -243,6 +256,17 @@
                     @endforelse
                 </tbody>
             </table>
+            @if($perPage !== 'all' && $riesgos->hasPages())
+            <div class="pagination">
+                {{ $riesgos->links('pagination::bootstrap-4') }}
+            </div>
+            @endif
+
+            @if($perPage !== 'all')
+            <div class="pagination-info">
+                Mostrando {{ $riesgos->count() }} de {{ $riesgos->total() }} riesgos
+            </div>
+            @endif
         </div>
     </div>
     
@@ -1061,6 +1085,30 @@ th, td {
     text-align: center !important;
 }
 
+.pagination {
+    display: flex;
+    justify-content: center;
+    margin: 20px 0;
+}
+
+.pagination-info {
+    text-align: center;
+    color: var(--gris-medio);
+    font-size: 0.9rem;
+    margin-bottom: 20px;
+}
+
+.header-controls {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.pagination-selector select {
+    width: auto;
+    min-width: 120px;
+}
+
 th[rowspan] {
     vertical-align: middle !important;
 }
@@ -1093,6 +1141,12 @@ th[rowspan] {
         document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
         document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
         document.getElementById(`${tabName}-tab`).classList.add('active');
+    }
+
+    function changePerPage(value) {
+        const url = new URL(window.location.href);
+        url.searchParams.set('per_page', value);
+        window.location.href = url.toString();
     }
 
     function mostrarModalEliminarRiesgo(id, textoRiesgo) {

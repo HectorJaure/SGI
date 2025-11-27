@@ -32,7 +32,7 @@ class RiskMatrixController extends Controller
             $query->where('nivel_riesgo', $request->nivel_riesgo);
         }
 
-        $riesgos = $query->orderBy('lugar')->orderBy('actividad')->get();
+        $riesgosQuery = $query->orderBy('lugar')->orderBy('actividad');
 
         $lugares = Risk::distinct('lugar')
             ->whereNotNull('lugar')
@@ -56,9 +56,19 @@ class RiskMatrixController extends Controller
 
         $totalRiesgos = Risk::count();
 
-        // Agrupar riesgos por LUGAR (principal) y luego por actividad
+        $perPage = $request->get('per_page', 'all');
+        
+        if ($perPage === 'all') {
+            $riesgos = $riesgosQuery->get();
+        } else {
+            $riesgos = $riesgosQuery->paginate($perPage);
+            $riesgos->appends($request->except('page'));
+        }
+
+        $riesgosParaAgrupar = $perPage === 'all' ? $riesgos : ($riesgos instanceof \Illuminate\Pagination\LengthAwarePaginator ? $riesgos->getCollection() : $riesgos);
+        
         $riesgosAgrupados = [];
-        foreach ($riesgos as $riesgo) {
+        foreach ($riesgosParaAgrupar as $riesgo) {
             $keyLugar = $riesgo->lugar;
             
             if (!isset($riesgosAgrupados[$keyLugar])) {
@@ -67,8 +77,7 @@ class RiskMatrixController extends Controller
                     'actividades' => []
                 ];
             }
-            
-            // Ahora agrupar por actividad dentro del mismo lugar
+
             $keyActividad = $riesgo->actividad;
             if (!isset($riesgosAgrupados[$keyLugar]['actividades'][$keyActividad])) {
                 $riesgosAgrupados[$keyLugar]['actividades'][$keyActividad] = [
@@ -86,10 +95,12 @@ class RiskMatrixController extends Controller
             'lugares', 
             'actividades', 
             'contadores',
-            'totalRiesgos'
+            'totalRiesgos',
+            'perPage'
         ));
     }
 
+    // ... el resto de los métodos se mantiene igual
     public function create()
     {
         $actividades = Risk::distinct('actividad')->orderBy('actividad')->pluck('actividad')->filter();

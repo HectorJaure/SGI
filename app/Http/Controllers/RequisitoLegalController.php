@@ -13,8 +13,7 @@ class RequisitoLegalController extends Controller
     public function index(Request $request)
     {
         $query = RequisitoLegal::query()->orderBy('categoria_norma')->orderBy('norma');
-        
-        // Búsqueda general
+
         if ($request->has('search') && $request->search != '') {
             $query->where(function($q) use ($request) {
                 $q->where('titulo', 'like', '%'.$request->search.'%')
@@ -22,8 +21,7 @@ class RequisitoLegalController extends Controller
                   ->orWhere('norma', 'like', '%'.$request->search.'%');
             });
         }
-        
-        // Filtro por cumplimiento
+
         if ($request->has('cumplimiento') && $request->cumplimiento != '') {
             if ($request->cumplimiento == 'null') {
                 $query->whereNull('cumplimiento');
@@ -31,61 +29,47 @@ class RequisitoLegalController extends Controller
                 $query->where('cumplimiento', $request->cumplimiento);
             }
         }
-        
-        // Filtro por norma
+
         if ($request->has('norma') && $request->norma != '') {
             $query->where('norma', $request->norma);
         }
-        
-        // Filtro por categoría de norma
+
         if ($request->has('categoria_norma') && $request->categoria_norma != '') {
             $query->where('categoria_norma', $request->categoria_norma);
         }
         
-        // Filtro por tipo de requisito
         if ($request->has('tipo_requisito') && $request->tipo_requisito != '') {
             $query->where('tipo_requisito', $request->tipo_requisito);
         }
         
-        // Filtro por peligro asociado
         if ($request->has('peligro_asociado') && $request->peligro_asociado != '') {
             $query->where('peligro_asociado', 'like', '%'.$request->peligro_asociado.'%');
         }
-        
-        // Filtro por fecha de cumplimiento
+
         if ($request->has('fecha_cumplimiento') && $request->fecha_cumplimiento != '') {
             $query->whereDate('fecha_cumplimiento', $request->fecha_cumplimiento);
         }
-        
-        // Filtro por responsable
+
         if ($request->has('responsable') && $request->responsable != '') {
             $query->where('responsables', 'like', '%'.$request->responsable.'%');
         }
-        
-        // OBTENER LAS NORMAS PARA EL FILTRO
+
         $normas = RequisitoLegal::distinct('norma')->pluck('norma')->filter();
-        
-        // OBTENER LOS TIPOS DE REQUISITO PARA EL FILTRO
+
         $tiposRequisito = RequisitoLegal::distinct('tipo_requisito')->pluck('tipo_requisito')->filter();
-        
-        // DEFINIR CATEGORÍAS
+
         $categoriasNorma = [
             'seguridad' => 'Normas de Seguridad',
             'salud' => 'Normas de Salud', 
             'organizacion' => 'Normas de Organización'
         ];
-        
-        // CALCULAR INDICADORES CON TODOS LOS DATOS FILTRADOS (sin paginación)
+
         $totalRequisitos = $query->count();
         $cumplidos = (clone $query)->where('cumplimiento', 'si')->count();
         $noCumplidos = (clone $query)->where('cumplimiento', 'no')->count();
         $sinEvaluar = (clone $query)->whereNull('cumplimiento')->count();
-        
-        // AGRUPAR REQUISITOS POR CATEGORÍA (sin paginación)
-        $requisitosAgrupados = $this->agruparPorCategoriaNorma($query->get());
-        
-        // Determinar si mostrar todos o paginar (solo para la tabla)
-        $perPage = $request->get('per_page', 10);
+
+        $perPage = $request->get('per_page', 'all');
         
         if ($perPage === 'all') {
             $requisitos = $query->get();
@@ -93,6 +77,10 @@ class RequisitoLegalController extends Controller
             $requisitos = $query->paginate($perPage);
             $requisitos->appends($request->except('page'));
         }
+
+        $requisitosParaAgrupar = $perPage === 'all' ? $requisitos : ($requisitos instanceof \Illuminate\Pagination\LengthAwarePaginator ? $requisitos->getCollection() : $requisitos);
+        
+        $requisitosAgrupados = $this->agruparPorCategoriaNorma($requisitosParaAgrupar);
         
         return view('requisitos-legales.index', compact(
             'requisitos', 
@@ -103,7 +91,8 @@ class RequisitoLegalController extends Controller
             'totalRequisitos',
             'cumplidos',
             'noCumplidos',
-            'sinEvaluar'
+            'sinEvaluar',
+            'perPage'
         ));
     }
     
@@ -127,10 +116,7 @@ class RequisitoLegalController extends Controller
         foreach ($requisitos as $requisito) {
             if (isset($agrupados[$requisito->categoria_norma])) {
                 $agrupados[$requisito->categoria_norma]['requisitos']->push($requisito);
-            } else {
-                // Si no tiene categoría, asignar a seguridad por defecto
-                $agrupados['seguridad']['requisitos']->push($requisito);
-            }
+            } 
         }
 
         return $agrupados;
@@ -165,7 +151,6 @@ class RequisitoLegalController extends Controller
 
         $requisito = RequisitoLegal::create($validated);
 
-        // NOTIFICACIÓN AUTOMÁTICA - Nuevo requisito legal
         $tipoNotificacion = $requisito->cumplimiento == 'no' ? 'warning' : 'success';
         
         NotificationController::createNotification(
@@ -209,7 +194,6 @@ class RequisitoLegalController extends Controller
         $requisito = RequisitoLegal::findOrFail($id);
         $requisito->update($validated);
 
-        // NOTIFICACIÓN AUTOMÁTICA - Requisito legal actualizado
         $tipoNotificacion = $requisito->cumplimiento == 'no' ? 'warning' : 'success';
         
         NotificationController::createNotification(
@@ -230,7 +214,6 @@ class RequisitoLegalController extends Controller
         
         $requisito->delete();
 
-        // NOTIFICACIÓN AUTOMÁTICA - Requisito legal eliminado
         NotificationController::createNotification(
             'Requisito Legal Eliminado',
             "Se ha eliminado el requisito: {$titulo} ({$norma}) del sistema",

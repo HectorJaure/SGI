@@ -123,136 +123,145 @@
             </div>
         </form>
     </div>
-
-    <!-- Tabla de Requisitos - CON TAMAÑOS ADAPTADOS Y ESTRUCTURA ORIGINAL -->
+    
     <div class="matrix-container">
         <div class="matrix-header">
             <h3 class="section-title">Lista de Requisitos Legales</h3>
             <div class="header-controls">
                 <span style="font-size: 0.9rem; color: var(--gris-medio); margin-right: 15px;">
-                    Total: {{ $requisitos->total() }} registros
+                    @if($perPage === 'all')
+                        Total: {{ $requisitos->count() }} registros
+                    @else
+                        Total: {{ $requisitos->total() }} registros
+                    @endif
                 </span>
                 <div class="pagination-selector">
                     <select id="perPage" name="per_page" onchange="changePerPage(this.value)" 
                             style="padding: 5px 10px; border: 1px solid var(--gris-claro); border-radius: 4px; font-size: 0.9rem;">
-                        <option value="10" {{ request('per_page', 10) == 10 ? 'selected' : '' }}>10</option>
-                        <option value="25" {{ request('per_page', 10) == 25 ? 'selected' : '' }}>25</option>
-                        <option value="50" {{ request('per_page', 10) == 50 ? 'selected' : '' }}>50</option>
-                        <option value="1000" {{ request('per_page', 10) == 1000 ? 'selected' : '' }}>Mostrar todo</option>
+                        <option value="10" {{ $perPage == 10 ? 'selected' : '' }}>10</option>
+                        <option value="25" {{ $perPage == 25 ? 'selected' : '' }}>25</option>
+                        <option value="50" {{ $perPage == 50 ? 'selected' : '' }}>50</option>
+                        <option value="all" {{ $perPage === 'all' ? 'selected' : '' }}>Mostrar todo</option>
                     </select>
                 </div>
             </div>
         </div>
-        
-        <table>
-            <thead>
-                <tr>
-                    <th rowspan="2" style="width: 120px;">Norma</th>
-                    <th rowspan="2" style="width: 200px;">Título</th>
-                    <th rowspan="2" style="width: 150px;">Tipo</th>
-                    <th rowspan="2" style="width: 100px;">No. Requisito</th>
-                    <th rowspan="2" style="width: 350px;">Descripción</th>
-                    <th colspan="3" class="subheader">CUMPLIMIENTO</th>
-                    <th rowspan="2" style="width: 300px;">Peligro Asociado</th>
-                    <th rowspan="2" style="width: 120px;">Fecha Cumplimiento</th>
-                    <th rowspan="2" style="width: 150px;">Responsables</th>
-                    <th rowspan="2" style="width: 120px;">Frecuencia Control</th>
-                    <th rowspan="2" style="width: 150px;">Responsable Control</th>
-                    <th rowspan="2" style="width: 100px;">Acciones</th>
-                </tr>
-                <tr>
-                    <th class="category-header" style="width: 120px;">Estado</th>
-                    <th class="category-header" style="width: 350px;">Evidencia</th>
-                    <th class="category-header" style="width: 350px;">Acciones</th>
-                </tr>
-            </thead>
-            <tbody>
-                @php
-                    $currentCategory = null;
-                @endphp
-                
-                @forelse($requisitos as $requisito)
-                    @if($requisito->categoria_norma != $currentCategory)
-                        @php
-                            $currentCategory = $requisito->categoria_norma;
-                            $categoriaNombre = $categoriasNorma[$currentCategory];
-                        @endphp
-                        <tr class="category-header-row">
-                            <td colspan="14" style="background-color: #2c5282; color: white; font-weight: bold; padding: 12px; text-align: center;">
-                                {{ strtoupper($categoriaNombre) }}
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th rowspan="2" style="width: 120px;">Norma</th>
+                        <th rowspan="2" style="width: 200px;">Título</th>
+                        <th rowspan="2" style="width: 150px;">Tipo</th>
+                        <th rowspan="2" style="width: 100px;">No. Requisito</th>
+                        <th rowspan="2" style="width: 350px;">Descripción</th>
+                        <th colspan="3" class="subheader">CUMPLIMIENTO</th>
+                        <th rowspan="2" style="width: 300px;">Peligro Asociado</th>
+                        <th rowspan="2" style="width: 120px;">Fecha Cumplimiento</th>
+                        <th rowspan="2" style="width: 150px;">Responsables</th>
+                        <th rowspan="2" style="width: 120px;">Frecuencia Control</th>
+                        <th rowspan="2" style="width: 150px;">Responsable Control</th>
+                        <th rowspan="2" style="width: 100px;">Acciones</th>
+                    </tr>
+                    <tr>
+                        <th class="category-header" style="width: 120px;">Estado</th>
+                        <th class="category-header" style="width: 350px;">Evidencia</th>
+                        <th class="category-header" style="width: 350px;">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @php
+                        $currentCategory = null;
+                    @endphp
+                    
+                    @forelse($requisitos as $requisito)
+                        @if($requisito->categoria_norma != $currentCategory)
+                            @php
+                                $currentCategory = $requisito->categoria_norma;
+                                $categoriaNombre = $categoriasNorma[$currentCategory];
+                            @endphp
+                            <tr class="category-header-row">
+                                <td colspan="14" style="background-color: #2c5282; color: white; font-weight: bold; padding: 12px; text-align: center;">
+                                    {{ strtoupper($categoriaNombre) }}
+                                </td>
+                            </tr>
+                        @endif
+
+                        <tr>
+                            <td><strong>{{ $requisito->norma }}</strong></td>
+                            <td>{{ $requisito->titulo }}</td>
+                            <td>{{ $requisito->tipo_requisito }}</td>
+                            <td>{{ $requisito->numero_requisito }}</td>
+                            <td class="descripcion-cell">{{ $requisito->descripcion }}</td>
+                            
+                            @if($requisito->cumplimiento == 'si')
+                                <td class="evaluation-cell">
+                                    <span class="significancia baja">CUMPLIDO</span>
+                                </td>
+                                <td class="evaluation-cell">{{ $requisito->evidencia ?: '' }}</td>
+                                <td class="evaluation-cell">-</td>
+                            @elseif($requisito->cumplimiento == 'no')
+                                <td class="evaluation-cell">
+                                    <span class="significancia alta">PENDIENTE</span>
+                                </td>
+                                <td class="evaluation-cell"></td>
+                                <td class="evaluation-cell">{{ $requisito->acciones_no ?: '' }}</td>
+                            @else
+                                <td class="evaluation-cell">
+                                    <span class="significancia"></span>
+                                </td>
+                                <td class="evaluation-cell"></td>
+                                <td class="evaluation-cell"></td>
+                            @endif
+                            
+                            <td class="peligro-cell">{{ $requisito->peligro_asociado }}</td>
+                            <td class="evaluation-cell">
+                                {{ $requisito->fecha_cumplimiento ? $requisito->fecha_cumplimiento->format('d/m/Y') : '' }}
+                            </td>
+                            <td>{{ $requisito->responsables }}</td>
+                            <td class="evaluation-cell">{{ $requisito->frecuencia_control }}</td>
+                            <td>{{ $requisito->responsable_control }}</td>
+                            <td class="evaluation-cell">
+                                <div class="actions">
+                                    <a href="{{ route('requisitos-legales.edit', $requisito->id) }}" 
+                                    class="btn-icon btn-edit" title="Editar">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <form action="{{ route('requisitos-legales.destroy', $requisito->id) }}" method="POST" class="d-inline">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="button" class="btn-icon btn-delete" 
+                                                onclick="mostrarModalEliminarRequisito({{ $requisito->id }}, '{{ addslashes($requisito->titulo) }} ({{ addslashes($requisito->norma) }})')"
+                                                title="Eliminar">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
                             </td>
                         </tr>
-                    @endif
+                    @empty
+                        <tr>
+                            <td colspan="14" class="text-center" style="padding: 20px;">
+                                <div class="alert alert-info">
+                                    <i class="fas fa-info-circle"></i> No se encontraron requisitos legales
+                                </div>
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+        @if($perPage !== 'all' && $requisitos->hasPages())
+        <div class="pagination">
+            {{ $requisitos->links('pagination::bootstrap-4') }}
+        </div>
+        @endif
 
-                    <tr>
-                        <td><strong>{{ $requisito->norma }}</strong></td>
-                        <td>{{ $requisito->titulo }}</td>
-                        <td>{{ $requisito->tipo_requisito }}</td>
-                        <td>{{ $requisito->numero_requisito }}</td>
-                        <td class="descripcion-cell">{{ $requisito->descripcion }}</td>
-                        
-                        @if($requisito->cumplimiento == 'si')
-                            <td class="evaluation-cell">
-                                <span class="significancia baja">CUMPLIDO</span>
-                            </td>
-                            <td class="evaluation-cell">{{ $requisito->evidencia ?: '' }}</td>
-                            <td class="evaluation-cell">-</td>
-                        @elseif($requisito->cumplimiento == 'no')
-                            <td class="evaluation-cell">
-                                <span class="significancia alta">PENDIENTE</span>
-                            </td>
-                            <td class="evaluation-cell"></td>
-                            <td class="evaluation-cell">{{ $requisito->acciones_no ?: '' }}</td>
-                        @else
-                            <td class="evaluation-cell">
-                                <span class="significancia"></span>
-                            </td>
-                            <td class="evaluation-cell"></td>
-                            <td class="evaluation-cell"></td>
-                        @endif
-                        
-                        <td class="peligro-cell">{{ $requisito->peligro_asociado }}</td>
-                        <td class="evaluation-cell">
-                            {{ $requisito->fecha_cumplimiento ? $requisito->fecha_cumplimiento->format('d/m/Y') : '' }}
-                        </td>
-                        <td>{{ $requisito->responsables }}</td>
-                        <td class="evaluation-cell">{{ $requisito->frecuencia_control }}</td>
-                        <td>{{ $requisito->responsable_control }}</td>
-                        <td class="evaluation-cell">
-                            <div class="actions">
-                                <a href="{{ route('requisitos-legales.edit', $requisito->id) }}" 
-                                class="btn-icon btn-edit" title="Editar">
-                                    <i class="fas fa-edit"></i>
-                                </a>
-                                <form action="{{ route('requisitos-legales.destroy', $requisito->id) }}" method="POST" class="d-inline">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="button" class="btn-icon btn-delete" 
-                                            onclick="mostrarModalEliminarRequisito({{ $requisito->id }}, '{{ addslashes($requisito->titulo) }} ({{ addslashes($requisito->norma) }})')"
-                                            title="Eliminar">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </form>
-                            </div>
-                        </td>
-                    </tr>
-                @empty
-                    <tr>
-                        <td colspan="14" class="text-center" style="padding: 20px;">
-                            <div class="alert alert-info">
-                                <i class="fas fa-info-circle"></i> No se encontraron requisitos legales
-                            </div>
-                        </td>
-                    </tr>
-                @endforelse
-            </tbody>
-        </table>
-    </div>
-    <div class="pagination">
-        {{ $requisitos->links('pagination::bootstrap-4') }}
-    </div>
-    <div class="pagination-info">
-        Mostrando {{ $requisitos->count() }} de {{ $requisitos->total() }} requisitos legales
+        @if($perPage !== 'all')
+        <div class="pagination-info">
+            Mostrando {{ $requisitos->count() }} de {{ $requisitos->total() }} requisitos legales
+        </div>
+        @endif
     </div>
 </div>
 
@@ -636,6 +645,30 @@
         margin: 0;
     }
 
+    .pagination {
+        display: flex;
+        justify-content: center;
+        margin: 20px 0;
+    }
+
+    .pagination-info {
+        text-align: center;
+        color: var(--gris-medio);
+        font-size: 0.9rem;
+        margin-bottom: 20px;
+    }
+
+    .header-controls {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .pagination-selector select {
+        width: auto;
+        min-width: 120px;
+    }
+
     .actions {
         display: flex;
         gap: 6px;
@@ -841,7 +874,6 @@
         document.querySelector('.modal-backdrop')?.remove();
     }
 
-    // Cerrar modal al hacer clic fuera
     window.addEventListener('click', function(event) {
         const modal = document.getElementById('modalEliminar');
         if (event.target === modal) {
@@ -849,35 +881,32 @@
         }
     });
 
-    // Cambiar número de elementos por página
     function changePerPage(value) {
         const url = new URL(window.location.href);
         url.searchParams.set('per_page', value);
         window.location.href = url.toString();
     }
 
-    // Prevenir que Bootstrap cierre el modal automáticamente
-document.addEventListener('DOMContentLoaded', function() {
-    const modalEliminar = document.getElementById('modalEliminar');
-    
-    if (modalEliminar) {
-        // Prevenir cierre al hacer clic fuera
-        const modalInstance = new bootstrap.Modal(modalEliminar);
-        modalEliminar.addEventListener('click', function(e) {
-            if (e.target === modalEliminar) {
-                e.stopPropagation();
-                e.preventDefault();
-            }
-        });
+    document.addEventListener('DOMContentLoaded', function() {
+        const modalEliminar = document.getElementById('modalEliminar');
+        
+        if (modalEliminar) {
+            const modalInstance = new bootstrap.Modal(modalEliminar);
+            modalEliminar.addEventListener('click', function(e) {
+                if (e.target === modalEliminar) {
+                    e.stopPropagation();
+                    e.preventDefault();
+                }
+            });
 
-        // Prevenir cierre con tecla ESC
-        modalEliminar.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') {
-                e.stopPropagation();
-                e.preventDefault();
-            }
-        });
-    }
-});
+
+            modalEliminar.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    e.stopPropagation();
+                    e.preventDefault();
+                }
+            });
+        }
+    });
 </script>
 @endsection

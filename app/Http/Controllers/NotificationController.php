@@ -10,22 +10,18 @@ class NotificationController extends Controller
 {
     public function index(Request $request)
     {
-        // Verificar si el usuario es administrador
         if (session('user_rol') !== 'Administrador') {
             return redirect()->route('dashboard')->with('error', 'No tienes permisos para acceder a esta sección.');
         }
 
-        // Obtener parámetros de filtro
         $filtroTipo = $request->get('tipo');
         $filtroEstado = $request->get('estado');
         $filtroUsuario = $request->get('usuario');
         
         $perPage = $request->get('per_page', 10);
 
-        // Construir consulta base (PRIMERO esto)
         $query = Notification::query();
 
-        // Aplicar filtros
         if ($filtroTipo) {
             $query->where('tipo', $filtroTipo);
         }
@@ -38,11 +34,9 @@ class NotificationController extends Controller
             $query->where('usuario_accion', $filtroUsuario);
         }
 
-        // AHORA SÍ ejecutar la consulta paginada
         $notifications = $query->orderBy('created_at', 'desc')->paginate($perPage);
         $unreadCount = Notification::where('estado', 'no_leida')->count();
-        
-        // Obtener todos los usuarios únicos que realizaron acciones
+
         $usuariosAccion = Notification::select('usuario_accion')
             ->distinct()
             ->whereNotNull('usuario_accion')
@@ -51,7 +45,6 @@ class NotificationController extends Controller
             ->filter()
             ->toArray();
         
-        // Pasar los filtros actuales a la vista
         $filtrosActuales = [
             'tipo' => $filtroTipo,
             'estado' => $filtroEstado,
@@ -62,15 +55,11 @@ class NotificationController extends Controller
         return view('notifications.index', compact('notifications', 'unreadCount', 'usuariosAccion', 'filtrosActuales'));
     }
 
-    /**
-     * Clear all notifications.
-     */
     public function clearAll()
     {
         try {
             $count = Notification::count();
-            
-            // Eliminar todas las notificaciones
+
             Notification::truncate();
             
             return response()->json([
@@ -87,9 +76,6 @@ class NotificationController extends Controller
         }
     }
 
-    /**
-     * Mark a notification as read.
-     */
     public function markAsRead($id)
     {
         try {
@@ -109,9 +95,6 @@ class NotificationController extends Controller
         }
     }
 
-    /**
-     * Mark all notifications as read.
-     */
     public function markAllAsRead()
     {
         try {
@@ -132,9 +115,6 @@ class NotificationController extends Controller
         }
     }
 
-    /**
-     * Mark a notification as unread.
-     */
     public function markAsUnread($id)
     {
         try {
@@ -154,9 +134,6 @@ class NotificationController extends Controller
         }
     }
 
-    /**
-     * Remove the specified notification from storage.
-     */
     public function destroy($id)
     {
 
@@ -178,12 +155,8 @@ class NotificationController extends Controller
         }
     }
 
-    /**
-     * Create a new notification.
-     */
     public static function createNotification($titulo, $descripcion, $tipo = 'info', $remitente = 'Sistema')
     {
-        // Obtener el usuario actual de la sesión
         $usuarioAccion = session('user_nombre') ?? 'Sistema';
         
         Notification::create([
@@ -192,15 +165,12 @@ class NotificationController extends Controller
             'tipo' => $tipo,
             'estado' => 'no_leida',
             'remitente' => $remitente,
-            'usuario_accion' => $usuarioAccion // Guardar quién realizó la acción
+            'usuario_accion' => $usuarioAccion 
         ]);
         
         return true;
     }
 
-    /**
-     * Get unread notifications for header.
-     */
     public static function getUnreadNotifications()
     {
         return Notification::where('estado', 'no_leida')
@@ -209,9 +179,6 @@ class NotificationController extends Controller
             ->get();
     }
 
-    /**
-     * Get unread notifications count.
-     */
     public static function getUnreadCount()
     {
         return Notification::where('estado', 'no_leida')->count();

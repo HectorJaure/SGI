@@ -175,7 +175,7 @@
                 </section>
             </div>
 
-            <div class="mt-4 d-flex justify-content-between">
+            <div class="mt-4 d-flex justify-content-center">
                 <a href="{{ asset('documents/instructivo_matriz_seguridad.docx') }}" 
                    class="btn btn-success"
                    download="Instructivo_Matriz_Seguridad_ITSN.docx">
