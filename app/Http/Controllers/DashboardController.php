@@ -15,7 +15,6 @@ class DashboardController extends Controller
         $requisitos = RequisitoLegal::all();
         $usuarios = User::all();
         
-        // Obtener notificaciones no leídas (solo para administradores)
         $notificaciones = [];
         $unreadNotificationsCount = 0;
         
@@ -27,31 +26,21 @@ class DashboardController extends Controller
             $unreadNotificationsCount = Notification::where('estado', 'no_leida')->count();
         }
 
-        // Métricas de riesgos
         $metricas = [
             'total_riesgos' => $riesgos->count(),
             'riesgos_alto_impacto' => $riesgos->where('nivel_riesgo', 'alta')->count(),
             'riesgos_mediano_impacto' => $riesgos->where('nivel_riesgo', 'media')->count(),
             'riesgos_bajo_impacto' => $riesgos->where('nivel_riesgo', 'baja')->count(),
-            'riesgos_muy_alto' => $riesgos->where('nivel_riesgo', 'muy-alta')->count(),
         ];
 
-        // Métricas de requisitos legales
         $totalRequisitos = $requisitos->count();
-        $requisitosCumplidos = $requisitos->where('cumplimiento', 'si')->count();
-        $porcentajeCumplimiento = $totalRequisitos > 0 ? round(($requisitosCumplidos / $totalRequisitos) * 100) : 0;
+        $requisitosNoCumplidos = $requisitos->where('cumplimiento', 'no')->count();
 
         $estado_sgsst = [
-            'general' => $porcentajeCumplimiento >= 80 ? 'Cumplimiento Satisfactorio' : 
-                        ($porcentajeCumplimiento >= 60 ? 'Cumplimiento Parcial' : 'Cumplimiento Insuficiente'),
-            'nivel_cumplimiento' => $porcentajeCumplimiento,
-            'ultima_auditoria' => '2024-02-15',
-            'proxima_auditoria' => '2024-08-15',
-            'color_estado' => $porcentajeCumplimiento >= 80 ? '#27ae60' : 
-                             ($porcentajeCumplimiento >= 60 ? '#f39c12' : '#e74c3c')
+            'nivel_cumplimiento' =>'Faltan por cumplir ' . $requisitosNoCumplidos . ' requisitos legales',
+            'color_estado' => $requisitosNoCumplidos >= 10 ? 'red' : ($requisitosNoCumplidos >= 5 ? 'orange' : 'green'),
         ];
 
-        // Alertas urgentes basadas en datos reales
         $alertas_urgentes = $this->generarAlertasUrgentes($riesgos, $requisitos);
 
         return view('dashboard', compact(
@@ -67,20 +56,18 @@ class DashboardController extends Controller
     {
         $alertas = [];
 
-        // Alertas de riesgos altos o muy altos
-        $riesgosUrgentes = $riesgos->whereIn('nivel_riesgo', ['alta', 'muy-alta'])->take(3);
+        $riesgosUrgentes = $riesgos->where('nivel_riesgo', 'alta')->take(3);
         
         foreach ($riesgosUrgentes as $riesgo) {
             $alertas[] = [
                 'tipo' => 'Riesgo',
-                'titulo' => 'Riesgo ' . ($riesgo->nivel_riesgo == 'alta' ? 'alto' : 'muy alto') . ' identificado',
+                'titulo' => 'Riesgo alto identificado',
                 'descripcion' => $riesgo->peligro . ' en ' . $riesgo->lugar,
                 'fecha' => $riesgo->created_at->format('Y-m-d'),
                 'prioridad' => 'Alta'
             ];
         }
 
-        // Alertas de requisitos no cumplidos
         $requisitosPendientes = $requisitos->where('cumplimiento', 'no')
             ->where('fecha_cumplimiento', '<', now()->addDays(7))
             ->take(2);
@@ -95,7 +82,6 @@ class DashboardController extends Controller
             ];
         }
 
-        // Si no hay alertas, mostrar mensaje informativo
         if (empty($alertas)) {
             $alertas[] = [
                 'tipo' => 'Sistema',

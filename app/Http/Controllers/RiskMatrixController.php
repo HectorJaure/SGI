@@ -4,20 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Models\Risk;
 use Illuminate\Http\Request;
-
 use App\Http\Controllers\NotificationController;
-
 
 class RiskMatrixController extends Controller
 {
     public function matrix(Request $request)
     {
-        $perPage = $request->get('per_page', 10);
-        
-        // Iniciar consulta
         $query = Risk::query();
 
-        // Aplicar filtros con búsqueda parcial
         if ($request->has('lugar') && !empty($request->lugar)) {
             $query->where('lugar', 'LIKE', '%' . $request->lugar . '%');
         }
@@ -38,13 +32,8 @@ class RiskMatrixController extends Controller
             $query->where('nivel_riesgo', $request->nivel_riesgo);
         }
 
-        // Obtener riesgos paginados
-        $riesgos = $query->paginate($perPage);
+        $riesgos = $query->orderBy('lugar')->orderBy('actividad')->get();
 
-        // Mantener parámetros en la paginación
-        $riesgos->appends($request->except('page'));
-
-        // Obtener lugares únicos para el datalist
         $lugares = Risk::distinct('lugar')
             ->whereNotNull('lugar')
             ->where('lugar', '!=', '')
@@ -52,7 +41,6 @@ class RiskMatrixController extends Controller
             ->pluck('lugar')
             ->filter();
 
-        // Obtener actividades únicas para el datalist
         $actividades = Risk::distinct('actividad')
             ->whereNotNull('actividad')
             ->where('actividad', '!=', '')
@@ -60,26 +48,36 @@ class RiskMatrixController extends Controller
             ->pluck('actividad')
             ->filter();
 
-        // Calcular contadores de riesgo (sin filtros para mostrar totales reales)
         $contadores = [
             'bajo' => Risk::where('nivel_riesgo', 'baja')->count(),
             'medio' => Risk::where('nivel_riesgo', 'media')->count(),
             'alto' => Risk::where('nivel_riesgo', 'alta')->count(),
-            'muy_alto' => Risk::where('nivel_riesgo', 'muy-alta')->count(),
         ];
 
-        // Agrupar riesgos por lugar y actividad para la vista
+        $totalRiesgos = Risk::count();
+
+        // Agrupar riesgos por LUGAR (principal) y luego por actividad
         $riesgosAgrupados = [];
         foreach ($riesgos as $riesgo) {
-            $key = $riesgo->lugar . '|' . $riesgo->actividad;
-            if (!isset($riesgosAgrupados[$key])) {
-                $riesgosAgrupados[$key] = [
+            $keyLugar = $riesgo->lugar;
+            
+            if (!isset($riesgosAgrupados[$keyLugar])) {
+                $riesgosAgrupados[$keyLugar] = [
                     'lugar' => $riesgo->lugar,
+                    'actividades' => []
+                ];
+            }
+            
+            // Ahora agrupar por actividad dentro del mismo lugar
+            $keyActividad = $riesgo->actividad;
+            if (!isset($riesgosAgrupados[$keyLugar]['actividades'][$keyActividad])) {
+                $riesgosAgrupados[$keyLugar]['actividades'][$keyActividad] = [
                     'actividad' => $riesgo->actividad,
                     'riesgos' => []
                 ];
             }
-            $riesgosAgrupados[$key]['riesgos'][] = $riesgo;
+            
+            $riesgosAgrupados[$keyLugar]['actividades'][$keyActividad]['riesgos'][] = $riesgo;
         }
 
         return view('risks.matrix', compact(
@@ -87,7 +85,8 @@ class RiskMatrixController extends Controller
             'riesgosAgrupados', 
             'lugares', 
             'actividades', 
-            'contadores'
+            'contadores',
+            'totalRiesgos'
         ));
     }
 
@@ -124,7 +123,6 @@ class RiskMatrixController extends Controller
             'consecuencia_infraestructura' => 'required|numeric|min:0|max:3',
         ]);
 
-        // Verificar si ya existe un riesgo con los mismos 3 campos
         $riesgoExistente = Risk::where('lugar', $request->lugar)
             ->where('actividad', $request->actividad)
             ->where('peligro', $request->peligro)
@@ -136,12 +134,10 @@ class RiskMatrixController extends Controller
                 ->with('error', 'Ya existe un riesgo registrado con el mismo lugar, actividad y descripción del peligro.');
         }
 
-        // Calcular significancia según el Excel
         $probabilidadTotal = $request->tiempo_exposicion + $request->personas_expuestas + $request->probabilidad_ocurrencia;
         $consecuenciaTotal = $request->consecuencia_infraestructura + $request->consecuencia_personas;
         $significancia = $probabilidadTotal * $consecuenciaTotal;
 
-        // Determinar nivel de riesgo según los límites del Excel
         $nivelRiesgo = $this->determinarNivelRiesgo($significancia);
 
         if (empty($request->otros_factores)) {
@@ -164,8 +160,7 @@ class RiskMatrixController extends Controller
             'nivel_riesgo' => $nivelRiesgo
         ]);
 
-        // NOTIFICACIÓN AUTOMÁTICA - Nuevo riesgo creado
-        $tipoNotificacion = $nivelRiesgo == 'alta' || $nivelRiesgo == 'muy-alta' ? 'urgent' : 'warning';
+        $tipoNotificacion = $nivelRiesgo == 'alta' ? 'urgent' : 'warning';
         
         NotificationController::createNotification(
             'Nuevo Riesgo Identificado',
@@ -194,11 +189,10 @@ class RiskMatrixController extends Controller
 
         $riesgo = Risk::findOrFail($id);
 
-        // Verificar si ya existe otro riesgo con los mismos 3 campos (excluyendo el actual)
         $riesgoExistente = Risk::where('lugar', $request->lugar)
             ->where('actividad', $request->actividad)
             ->where('peligro', $request->peligro)
-            ->where('id', '!=', $id) // Excluir el riesgo actual
+            ->where('id', '!=', $id)
             ->first();
 
         if ($riesgoExistente) {
@@ -207,12 +201,10 @@ class RiskMatrixController extends Controller
                 ->with('error', 'Ya existe otro riesgo registrado con el mismo lugar, actividad y descripción del peligro.');
         }
 
-        // Recalcular significancia según el Excel
         $probabilidadTotal = $request->tiempo_exposicion + $request->personas_expuestas + $request->probabilidad_ocurrencia;
         $consecuenciaTotal = $request->consecuencia_infraestructura + $request->consecuencia_personas;
         $significancia = $probabilidadTotal * $consecuenciaTotal;
 
-        // Determinar nivel de riesgo según los límites del Excel
         $nivelRiesgo = $this->determinarNivelRiesgo($significancia);
 
         $riesgo->update([
@@ -231,7 +223,6 @@ class RiskMatrixController extends Controller
             'nivel_riesgo' => $nivelRiesgo
         ]);
 
-        // NOTIFICACIÓN AUTOMÁTICA - Riesgo actualizado
         NotificationController::createNotification(
             'Riesgo Actualizado',
             "Se han modificado los datos del riesgo en {$riesgo->lugar} - {$riesgo->actividad}. Nuevo nivel: " . $this->formatearNivelRiesgo($nivelRiesgo),
@@ -249,7 +240,6 @@ class RiskMatrixController extends Controller
         
         $riesgo->delete();
 
-        // NOTIFICACIÓN AUTOMÁTICA - Riesgo eliminado
         NotificationController::createNotification(
             'Riesgo Eliminado',
             "Se ha eliminado el riesgo de {$lugar} - {$actividad} del sistema",
@@ -263,8 +253,7 @@ class RiskMatrixController extends Controller
     {
         if ($significancia < 45) return 'baja';
         if ($significancia < 75) return 'media';
-        if ($significancia < 120) return 'alta';
-        return 'muy-alta';
+        return 'alta';
     }
 
     private function formatearNivelRiesgo($nivel)
@@ -272,11 +261,9 @@ class RiskMatrixController extends Controller
         $niveles = [
             'baja' => 'Bajo',
             'media' => 'Medio', 
-            'alta' => 'Alto',
-            'muy-alta' => 'Muy Alto'
+            'alta' => 'Alto'
         ];
         
         return $niveles[$nivel] ?? $nivel;
     }
-
 }

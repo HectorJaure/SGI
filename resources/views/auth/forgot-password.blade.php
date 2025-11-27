@@ -215,7 +215,7 @@
                 <label for="email">Correo Electrónico</label>
                 <div class="input-with-icon">
                     <i class="fas fa-envelope input-icon"></i>
-                    <input type="email" id="email" name="email" placeholder="admin@itsn.edu.mx" required value="{{ old('email') }}">
+                    <input type="email" id="email" name="email" placeholder="Ej: admin@itsn.edu.mx" required value="{{ old('email') }}">
                 </div>
                 @error('email')
                     <small style="color: var(--rojo); font-size: 0.8rem;">{{ $message }}</small>

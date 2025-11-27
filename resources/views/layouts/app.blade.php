@@ -181,7 +181,7 @@
 
 .status-info h3 {
     color: #2c3e50;
-    font-size: 20px;
+    font-size: 1,2rem;
     margin-bottom: 5px;
 }
 

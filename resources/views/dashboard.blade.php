@@ -7,47 +7,35 @@
 <div class="container-fluid">
     <h1 class="page-title">Dashboard del Sistema de Gestión</h1>
     
-    <!-- Status Banner -->
     <div class="status-banner content-card mb-4">
         <div class="card-body">
             <div class="status-content">
                 <div class="status-info">
-                    <h3 class="mb-1">Estado del SGSST: {{ $estado_sgsst['general'] }}</h3>
-                    <p class="text-muted mb-0">Última actualización: {{ date('d/m/Y') }}</p>
+                    <h3 class="mb-1">Estado del SGSST:</h3>
                 </div>
                 <div class="status-indicator text-end">
                     <div class="status-level" style="color: {{ $estado_sgsst['color_estado'] }};">
-                        {{ $estado_sgsst['nivel_cumplimiento'] }}%
-                    </div>
-                    <div class="status-dates text-muted small">
-                        Próxima auditoría: {{ date('d/m/Y', strtotime($estado_sgsst['proxima_auditoria'])) }}
+                        {{ $estado_sgsst['nivel_cumplimiento'] }}
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Métricas Rápidas -->
     <div class="row mb-4">
-        <div class="col-md-3">
+        <div class="col-md-4">
             <div class="stat-card users">
                 <h3>Total Riesgos</h3>
                 <div class="number">{{ $metricas['total_riesgos'] }}</div>
             </div>
         </div>
-        <div class="col-md-3">
+        <div class="col-md-4">
             <div class="stat-card active">
                 <h3>Riesgos Altos</h3>
-                <div class="number">{{ $metricas['riesgos_alto_impacto'] + $metricas['riesgos_muy_alto'] }}</div>
+                <div class="number">{{ $metricas['riesgos_alto_impacto'] }}</div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="stat-card roles">
-                <h3>Cumplimiento</h3>
-                <div class="number">{{ $estado_sgsst['nivel_cumplimiento'] }}%</div>
-            </div>
-        </div>
-        <div class="col-md-3">
+        <div class="col-md-4">
             <div class="stat-card inactive">
                 <h3>Alertas Activas</h3>
                 <div class="number">{{ count($alertas_urgentes) }}</div>
@@ -55,7 +43,6 @@
         </div>
     </div>
 
-    <!-- Combined Metrics and Alerts Section -->
     <div class="row">
         <div class="col-lg-6">
             <div class="content-card h-100">
@@ -64,7 +51,6 @@
                 </div>
                 <div class="card-body">
                     <div class="risk-chart-container">
-                        <!-- Gráfica circular -->
                         <div class="chart-wrapper">
                             <svg class="chart-svg" viewBox="0 0 42 42">
                                 <circle class="chart-background" cx="21" cy="21" r="15.9155" />
@@ -72,23 +58,22 @@
                                 @php
                                     $total = $metricas['total_riesgos'];
                                     if($total > 0) {
-                                        $porcentaje_alto = (($metricas['riesgos_alto_impacto'] + $metricas['riesgos_muy_alto']) / $total) * 100;
-                                        $porcentaje_medio = ($metricas['riesgos_mediano_impacto'] / $total) * 100;
-                                        $porcentaje_bajo = ($metricas['riesgos_bajo_impacto'] / $total) * 100;
+                                        $alto_count = $metricas['riesgos_alto_impacto'];
+                                        $medio_count = $metricas['riesgos_mediano_impacto'];
+                                        $bajo_count = $metricas['riesgos_bajo_impacto'];
                                         
-                                        // CÁLCULOS CORREGIDOS - Usando la circunferencia completa (100)
+                                        $porcentaje_alto = ($alto_count / $total) * 100;
+                                        $porcentaje_medio = ($medio_count / $total) * 100;
+                                        $porcentaje_bajo = ($bajo_count / $total) * 100;
+                                        
                                         $circumference = 100;
+                                        $offset_base = 25;
                                         
-                                        // El primer segmento empieza en 25 (parte superior)
-                                        $offset_alto = 25;
-                                        // El segundo segmento empieza donde termina el primero
-                                        $offset_medio = $offset_alto - $porcentaje_alto;
-                                        // El tercer segmento empieza donde termina el segundo
-                                        $offset_bajo = $offset_medio - $porcentaje_medio;
                                     } else {
+                                        $alto_count = $medio_count = $bajo_count = 0;
                                         $porcentaje_alto = $porcentaje_medio = $porcentaje_bajo = 0;
                                         $circumference = 100;
-                                        $offset_alto = $offset_medio = $offset_bajo = 25;
+                                        $offset_base = 25;
                                     }
                                 @endphp
                                 
@@ -97,27 +82,27 @@
                                     <circle class="chart-segment segment-alto"
                                         cx="21" cy="21" r="15.9155"
                                         stroke-dasharray="{{ $porcentaje_alto }} {{ $circumference - $porcentaje_alto }}"
-                                        stroke-dashoffset="{{ $offset_alto }}" />
+                                        stroke-dashoffset="{{ $offset_base }}" />
                                     @endif
                                     
                                     @if($porcentaje_medio > 0)
                                     <circle class="chart-segment segment-medio"
                                         cx="21" cy="21" r="15.9155"
                                         stroke-dasharray="{{ $porcentaje_medio }} {{ $circumference - $porcentaje_medio }}"
-                                        stroke-dashoffset="{{ $offset_medio }}" />
+                                        stroke-dashoffset="{{ $offset_base - $porcentaje_alto }}" />
                                     @endif
                                     
                                     @if($porcentaje_bajo > 0)
                                     <circle class="chart-segment segment-bajo"
                                         cx="21" cy="21" r="15.9155"
                                         stroke-dasharray="{{ $porcentaje_bajo }} {{ $circumference - $porcentaje_bajo }}"
-                                        stroke-dashoffset="{{ $offset_bajo }}" />
+                                        stroke-dashoffset="{{ $offset_base - $porcentaje_alto - $porcentaje_medio }}" />
                                     @endif
                                 @else
-                                <circle class="chart-segment segment-bajo"
-                                    cx="21" cy="21" r="15.9155"
-                                    stroke-dasharray="100 0"
-                                    stroke-dashoffset="25" />
+                                    <circle class="chart-segment segment-empty"
+                                        cx="21" cy="21" r="15.9155"
+                                        stroke-dasharray="100 0"
+                                        stroke-dashoffset="25" />
                                 @endif
                             </svg>
                             
@@ -127,12 +112,11 @@
                             </div>
                         </div>
                         
-                        <!-- Leyenda -->
                         <div class="chart-legend">
                             <div class="legend-item">
                                 <div class="legend-color alto"></div>
                                 <div class="legend-info">
-                                    <div class="legend-value">{{ $metricas['riesgos_alto_impacto'] + $metricas['riesgos_muy_alto'] }}</div>
+                                    <div class="legend-value">{{ $alto_count }}</div>
                                     <div class="legend-label">Alto Impacto</div>
                                 </div>
                                 <div class="legend-percentage">{{ $total > 0 ? round($porcentaje_alto) : 0 }}%</div>
@@ -140,7 +124,7 @@
                             <div class="legend-item">
                                 <div class="legend-color medio"></div>
                                 <div class="legend-info">
-                                    <div class="legend-value">{{ $metricas['riesgos_mediano_impacto'] }}</div>
+                                    <div class="legend-value">{{ $medio_count }}</div>
                                     <div class="legend-label">Medio Impacto</div>
                                 </div>
                                 <div class="legend-percentage">{{ $total > 0 ? round($porcentaje_medio) : 0 }}%</div>
@@ -148,7 +132,7 @@
                             <div class="legend-item">
                                 <div class="legend-color bajo"></div>
                                 <div class="legend-info">
-                                    <div class="legend-value">{{ $metricas['riesgos_bajo_impacto'] }}</div>
+                                    <div class="legend-value">{{ $bajo_count }}</div>
                                     <div class="legend-label">Bajo Impacto</div>
                                 </div>
                                 <div class="legend-percentage">{{ $total > 0 ? round($porcentaje_bajo) : 0 }}%</div>
@@ -200,7 +184,6 @@
         </div>
     </div>
 
-    <!-- Quick Actions -->
     <div class="content-card mt-4">
         <div class="card-header">
             <h3 class="card-title mb-0">Acciones Rápidas</h3>
@@ -223,105 +206,10 @@
 
 @section('styles')
 <style>
-    /* Stats Cards Styles */
-    .stats-cards {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-        gap: 20px;
-        margin-bottom: 30px;
-    }
-
-    .stat-card {
-        background: white;
-        padding: 25px;
-        border-radius: 10px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        border-left: 4px solid #3498db;
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
-    }
-
-    .stat-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-    }
-
-    .stat-card.users {
-        border-left-color: #3498db;
-    }
-
-    .stat-card.active {
-        border-left-color: #27ae60;
-    }
-
-    .stat-card.inactive {
-        border-left-color: #e74c3c;
-    }
-
-    .stat-card.roles {
-        border-left-color: #f39c12;
-    }
-
-    .stat-card h3 {
-        font-size: 14px;
-        color: #7f8c8d;
-        margin-bottom: 10px;
-        text-transform: uppercase;
-        font-weight: 500;
-    }
-
-    .stat-card .number {
-        font-size: 32px;
-        font-weight: 700;
-        color: #2c3e50;
-    }
-
-    /* Status Banner */
-    .status-banner {
-        background: white;
-        padding: 25px;
-        border-radius: 10px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        margin-bottom: 30px;
-        border-left: 6px solid #27ae60;
-    }
-
-    .status-content {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-
-    .status-info h3 {
-        color: #2c3e50;
-        font-size: 20px;
-        margin-bottom: 5px;
-    }
-
-    .status-info p {
-        color: #7f8c8d;
-    }
-
-    .status-indicator {
-        text-align: right;
-    }
-
-    .status-level {
-        font-size: 32px;
-        font-weight: 700;
-        color: #27ae60;
-    }
-
-    .status-dates {
-        font-size: 14px;
-        color: #7f8c8d;
-        margin-top: 5px;
-    }
-
-    /* Risk Chart */
     .risk-chart-container {
         display: grid;
         grid-template-columns: 1fr 1fr;
-        gap: 20px;
+        gap: 30px;
         align-items: center;
     }
 
@@ -337,24 +225,24 @@
         width: 200px;
         height: 200px;
         transform: rotate(-90deg);
-        filter: drop-shadow(0 4px 8px rgba(0,0,0,0.1));
+        filter: drop-shadow(0 4px 8px rgba(0,0,0,0.15));
     }
 
     .chart-background {
         fill: none;
         stroke: #f8f9fa;
-        stroke-width: 10;
+        stroke-width: 8;
     }
 
     .chart-segment {
         fill: none;
-        stroke-width: 10;
-        stroke-linecap: round;
-        transition: all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
-        animation: chartAnimation 1.5s ease-out forwards;
+        stroke-width: 8;
+        stroke-linecap: butt;
+        transition: all 0.8s ease;
+        animation: drawSegment 1.5s ease-out forwards;
     }
 
-    @keyframes chartAnimation {
+    @keyframes drawSegment {
         from {
             stroke-dasharray: 0 100;
         }
@@ -372,6 +260,17 @@
         stroke: #27ae60;
     }
 
+    .segment-empty {
+        stroke: #bdc3c7;
+        stroke-width: 8;
+    }
+
+    .chart-segment:hover {
+        stroke-width: 10;
+        filter: brightness(1.1);
+        cursor: pointer;
+    }
+
     .chart-center {
         position: absolute;
         top: 50%;
@@ -386,11 +285,12 @@
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        border: 2px solid #f8f9fa;
     }
 
     .chart-total {
-        font-size: 24px;
+        font-size: 20px;
         font-weight: 800;
         color: #2c3e50;
         line-height: 1;
@@ -398,7 +298,7 @@
     }
 
     .chart-label {
-        font-size: 10px;
+        font-size: 9px;
         color: #7f8c8d;
         text-transform: uppercase;
         font-weight: 600;
@@ -408,22 +308,28 @@
     .chart-legend {
         display: flex;
         flex-direction: column;
-        gap: 16px;
+        gap: 12px;
     }
 
     .legend-item {
         display: flex;
         align-items: center;
         gap: 12px;
-        padding: 12px;
+        padding: 12px 15px;
         background: #f8f9fa;
         border-radius: 8px;
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        transition: all 0.3s ease;
+        border-left: 4px solid transparent;
     }
 
     .legend-item:hover {
         transform: translateX(5px);
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        background: white;
+    }
+
+    .legend-item:hover .legend-color {
+        transform: scale(1.1);
     }
 
     .legend-color {
@@ -432,18 +338,22 @@
         border-radius: 6px;
         flex-shrink: 0;
         box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        transition: all 0.3s ease;
     }
 
     .legend-color.alto {
         background: #e74c3c;
+        border-left: 4px solid #c0392b;
     }
 
     .legend-color.medio {
         background: #f39c12;
+        border-left: 4px solid #e67e22;
     }
 
     .legend-color.bajo {
         background: #27ae60;
+        border-left: 4px solid #229954;
     }
 
     .legend-info {
@@ -453,7 +363,7 @@
     .legend-value {
         font-weight: 700;
         color: #2c3e50;
-        font-size: 18px;
+        font-size: 16px;
         line-height: 1;
         margin-bottom: 2px;
     }
@@ -469,14 +379,16 @@
     .legend-percentage {
         font-weight: 800;
         color: #2c3e50;
-        font-size: 16px;
+        font-size: 14px;
         background: white;
-        padding: 4px 8px;
+        padding: 4px 10px;
         border-radius: 6px;
         box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        min-width: 45px;
+        text-align: center;
     }
 
-    /* Alerts List */
+    /* ESTILOS ORIGINALES DE ALERTAS */
     .alert-item {
         display: flex;
         align-items: flex-start;
@@ -569,7 +481,7 @@
         color: #27ae60;
     }
 
-    /* Quick Actions */
+    /* Quick Actions originales */
     .quick-actions {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -610,24 +522,24 @@
         text-align: center;
     }
 
-    /* Responsive */
     @media (max-width: 768px) {
         .risk-chart-container {
             grid-template-columns: 1fr;
+            gap: 20px;
         }
         
-        .quick-actions {
-            grid-template-columns: 1fr;
+        .chart-svg {
+            width: 180px;
+            height: 180px;
         }
         
-        .status-content {
-            flex-direction: column;
-            text-align: center;
-            gap: 15px;
+        .chart-center {
+            width: 70px;
+            height: 70px;
         }
         
-        .status-indicator {
-            text-align: center;
+        .chart-total {
+            font-size: 18px;
         }
     }
 </style>
@@ -636,22 +548,43 @@
 @section('scripts')
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Animación de la gráfica
-        const chartSegments = document.querySelectorAll('.chart-segment');
+        const segments = document.querySelectorAll('.chart-segment');
         
-        chartSegments.forEach((segment, index) => {
+        segments.forEach((segment, index) => {
             segment.style.animationDelay = `${index * 0.3}s`;
-        });
-
-        // Efectos hover para las tarjetas de métricas
-        const statCards = document.querySelectorAll('.stat-card');
-        statCards.forEach(card => {
-            card.addEventListener('mouseenter', function() {
-                this.style.transform = 'translateY(-5px)';
+            
+            segment.addEventListener('mouseenter', function() {
+                this.style.strokeWidth = '10';
+                this.style.filter = 'brightness(1.2)';
             });
             
-            card.addEventListener('mouseleave', function() {
-                this.style.transform = 'translateY(0)';
+            segment.addEventListener('mouseleave', function() {
+                this.style.strokeWidth = '8';
+                this.style.filter = 'brightness(1)';
+            });
+        });
+
+        const legendItems = document.querySelectorAll('.legend-item');
+        
+        legendItems.forEach(item => {
+            item.addEventListener('mouseenter', function() {
+                const segmentType = this.querySelector('.legend-color').classList[1];
+                const correspondingSegment = document.querySelector(`.segment-${segmentType}`);
+                
+                if (correspondingSegment) {
+                    correspondingSegment.style.strokeWidth = '10';
+                    correspondingSegment.style.filter = 'brightness(1.2)';
+                }
+            });
+            
+            item.addEventListener('mouseleave', function() {
+                const segmentType = this.querySelector('.legend-color').classList[1];
+                const correspondingSegment = document.querySelector(`.segment-${segmentType}`);
+                
+                if (correspondingSegment) {
+                    correspondingSegment.style.strokeWidth = '8';
+                    correspondingSegment.style.filter = 'brightness(1)';
+                }
             });
         });
     });
